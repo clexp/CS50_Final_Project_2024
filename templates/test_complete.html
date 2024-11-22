@@ -1,26 +1,16 @@
 {% extends "layout.html" %} {% block title %}Test Complete{% endblock %} {%
 block main %}
-<div class="container">
-  <div class="card">
-    <div class="card-body text-center">
-      <h5 class="card-title">Test Complete!</h5>
-      <p class="card-text">
-        Your score: {{ score }} out of {{ total }} ({{ (score / total * 100) |
-        round(1) }}%)
-      </p>
-
-      <div class="mt-4">
-        <a href="{{ url_for('test_set_up') }}" class="btn btn-primary"
-          >Take Another Test</a
-        >
-        <a href="{{ url_for('show_stats') }}" class="btn btn-info"
-          >View Statistics</a
-        >
-        <a href="{{ url_for('index') }}" class="btn btn-secondary"
-          >Return Home</a
-        >
-      </div>
-    </div>
+<div class="card">
+  <div class="card-body text-center">
+    <h2 class="card-title">Test Complete!</h2>
+    <p class="card-text">Your score: {{ score }} out of {{ total }}</p>
+    <p class="card-text">Success rate: {{ (score / total * 100)|round(1) }}%</p>
+    <a href="{{ url_for('start_test') }}" class="btn btn-primary"
+      >Take Another Test</a
+    >
+    <a href="{{ url_for('index') }}" class="btn btn-secondary"
+      >Return to Home</a
+    >
   </div>
 </div>
 {% endblock %}

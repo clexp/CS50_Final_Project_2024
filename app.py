@@ -2,21 +2,18 @@ import os
 import sqlite3
 import flask_session
 from datetime import datetime
-from random import random, shuffle
+from random import shuffle
 from math import ceil
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for, g
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required
 from datetime import date
 
 # Configure application
 app = Flask(__name__)
-
-# Custom filter
-app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -261,14 +258,6 @@ def delete_note(note_id):
     cursor.execute("SELECT * FROM notes WHERE id = ?", (note_id,))
     mem_note = cursor.fetchone()
     return render_template("delete_note.html", this_note=mem_note)
-
-
-@app.route("/test_set_up")
-# @login_required
-def test_set_up():
-    """Enter test parameter"""
-    # user_id = int(session["user_id"])
-    return render_template("test_set_up.html")
 
 
 @app.route("/test")
