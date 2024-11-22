@@ -3,20 +3,9 @@
 <div class="container">
   <h2>Learning Progress</h2>
 
-  <!-- Summary Cards -->
-  <div class="row mb-4">
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Overall Success Rate</h5>
-          <p class="card-text display-4">
-            {{ (stats|sum(attribute='times_correct') /
-            stats|sum(attribute='times_challenged') * 100)|round(1) }}%
-          </p>
-        </div>
-      </div>
-    </div>
-    <!-- Add more summary cards as needed -->
+  <!-- Results count -->
+  <div class="alert alert-info">
+    Showing {{ stats|length }} of {{ total_results }} tested notes
   </div>
 
   <!-- Detailed Stats Table -->
@@ -59,8 +48,40 @@
     </div>
   </div>
 
-  <!-- Navigation Buttons -->
-  <div class="text-center mb-4">
+  <!-- Pagination -->
+  {% if total_pages > 1 %}
+  <nav aria-label="Statistics pages">
+    <ul class="pagination justify-content-center">
+      <!-- Previous button -->
+      <li class="page-item {% if page == 1 %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('show_stats', page=page-1) }}"
+          >Previous</a
+        >
+      </li>
+
+      <!-- Page numbers -->
+      {% set start_page = [1, (page|int - 2)]|max %} {% set end_page =
+      [(total_pages|int), (page|int + 2)]|min %} {% for p in range(start_page,
+      end_page + 1) %}
+      <li class="page-item {% if p == page|int %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('show_stats', page=p) }}"
+          >{{ p }}</a
+        >
+      </li>
+      {% endfor %}
+
+      <!-- Next button -->
+      <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('show_stats', page=page+1) }}"
+          >Next</a
+        >
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+
+  <!-- Return button -->
+  <div class="text-center mt-4">
     <a href="{{ url_for('index') }}" class="btn btn-primary"
       >Return to Main Page</a
     >

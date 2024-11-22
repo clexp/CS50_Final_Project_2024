@@ -389,8 +389,8 @@ I want to use git and github for this. I can't do this on the cs50 remote vm. Th
 23. Submit the project.
 24. Collect the certificate
     AIM TO COMPLETE 'BETTER' FOR PERSONAL USE
-25. Collect test results
-26. Graph the test results by topic/ mem note.
+25. Collect test results. done.
+26. Graph the test results by topic/ mem note. Done as tables
 27. Add optional Url web link to each note
 28. Add Flags to the database.
 29. Make a flag editor as a subset of new and edit note.

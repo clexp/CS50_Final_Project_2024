@@ -1,26 +1,61 @@
-{% extends "layout.html" %} {% block title %}Start Test{% endblock %} {% block
+{% extends "layout.html" %} {% block title %}Test Setup{% endblock %} {% block
 main %}
 <div class="container">
   <div class="card">
     <div class="card-body">
-      <h5 class="card-title">Test Setup</h5>
-      <form action="{{ url_for('start_test') }}" method="post">
-        <div class="mb-3">
-          <label for="question_count" class="form-label">
-            Number of Questions
-          </label>
-          <input
-            type="number"
-            class="form-control"
-            id="question_count"
-            name="question_count"
-            min="1"
-            max="20"
-            value="10"
-          />
+      <h2 class="card-title text-center mb-4">Test Setup</h2>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <form action="{{ url_for('start_test') }}" method="post">
+            <div class="mb-4">
+              <label for="question_count" class="form-label">
+                Number of Questions
+              </label>
+              <input
+                type="number"
+                class="form-control"
+                id="question_count"
+                name="question_count"
+                value="10"
+                min="1"
+                max="50"
+              />
+            </div>
+            <div class="mb-4">
+              <label for="filter_type" class="form-label">
+                Question Selection
+              </label>
+              <select class="form-select" id="filter_type" name="filter_type">
+                <option value="random">Random Selection</option>
+                <option value="weakest">Weakest Performance First</option>
+                <option value="untested">Untested Notes Only</option>
+              </select>
+              <div class="form-text mt-2">
+                <ul class="list-unstyled">
+                  <li class="mb-2">
+                    <strong>Random Selection:</strong> Questions are chosen
+                    randomly from all available notes
+                  </li>
+                  <li class="mb-2">
+                    <strong>Weakest Performance:</strong> Prioritizes questions
+                    you've struggled with most
+                  </li>
+                  <li class="mb-2">
+                    <strong>Untested Notes:</strong> Only includes questions you
+                    haven't attempted yet
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">Start Test</button>
+              <a href="{{ url_for('index') }}" class="btn btn-secondary"
+                >Return to Main Page</a
+              >
+            </div>
+          </form>
         </div>
-        <button type="submit" class="btn btn-primary">Start Test</button>
-      </form>
+      </div>
     </div>
   </div>
 </div>

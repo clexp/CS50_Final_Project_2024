@@ -1,19 +1,57 @@
 {% extends "layout.html" %} {% block title %} Home {% endblock %} {% block main
 %}
-<div class="section">
-  <h2>Welcome</h2>
-  <a href="/search"
-    ><button class="btn btn-primary">Search for a Mem Note</button></a
-  >
-  <a href="/record_new_note"
-    ><button class="btn btn-primary">Write a new Mem Note</button></a
-  >
-  <a href="/test_set_up"
-    ><button class="btn btn-primary">Do a flash card test set</button></a
-  >
-  <a href="{{ url_for('show_stats') }}" class="btn btn-primary">
-    View Learning Statistics
-  </a>
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">Welcome to Learning Notes</h2>
+      {% if total_notes == 0 %}
+      <p class="text-center">
+        No notes yet. Start by
+        <a href="{{ url_for('record_new_note') }}">creating a new note</a>!
+      </p>
+      {% else %}
+      <p class="text-center">
+        You have {{ total_notes }} note{% if total_notes != 1 %}s{% endif %} in
+        total. Here are your most recent entries:
+      </p>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Subject</th>
+              <th>Topic</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for note in notes %}
+            <tr>
+              <td>{{ note.title }}</td>
+              <td>{{ note.subject }}</td>
+              <td>{{ note.topic }}</td>
+              <td>{{ note.date }}</td>
+              <td>
+                <a
+                  href="{{ url_for('display_note', note_id=note.id) }}"
+                  class="btn btn-sm btn-primary"
+                  >View</a
+                >
+                <a
+                  href="{{ url_for('edit_note', note_id=note.id) }}"
+                  class="btn btn-sm btn-secondary"
+                  >Edit</a
+                >
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 {% endblock %}

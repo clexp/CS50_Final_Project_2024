@@ -5,7 +5,7 @@ from datetime import datetime
 from random import random, shuffle
 from math import ceil
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, redirect, render_template, request, session, url_for, g
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -22,16 +22,6 @@ app.jinja_env.filters["usd"] = usd
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
-
-# Database schema:
-# CREATE TABLE notes (
-#     id INTEGER PRIMARY KEY AUTOINCREMENT,
-#     title TEXT NOT NULL,
-#     content TEXT NOT NULL, 
-#     subject TEXT NOT NULL,
-#     topic TEXT NOT NULL,
-#     date DATETIME DEFAULT CURRENT_TIMESTAMP
-# );
 
 
 # Configure use SQLite database
@@ -60,38 +50,45 @@ def after_request(response):
 
 
 @app.route("/")
-# @login_required
+@login_required
 def index():
-    """Show a simple page"""
-    # user_id = int(session["user_id"])
-    return render_template("index.html")
+    # Get total count of notes
+    cursor.execute("""
+        SELECT COUNT(*) as count 
+        FROM notes 
+        WHERE user_id = ?
+    """, (session["user_id"],))
+    total_notes = cursor.fetchone()['count']
+    
+    # Get recent notes
+    cursor.execute("""
+        SELECT * FROM notes 
+        WHERE user_id = ? 
+        ORDER BY date DESC 
+        LIMIT 10
+    """, (session["user_id"],))
+    notes = cursor.fetchall()
+    
+    return render_template("index.html", notes=notes, total_notes=total_notes)
 
 
 @app.route("/old_record_new_note", methods=["GET", "POST"])
+@login_required
 def create_new_note():
     """Create a new note"""
     if request.method == "GET":
         return render_template("create.html")
     
     if request.method == "POST":
-        title = request.form.get("title")
-        subject = request.form.get("subject")
-        topic = request.form.get("topic")
-        # Convert date string to SQLite date format
-
-        content = request.form.get("content")
-        
-        # Create the parameters tuple
-        params = (title, content)
-        
-        # Execute the query with parameters as a single tuple
         cursor.execute("""
-            INSERT INTO notes (title, content) 
-            VALUES (?, ?)
-        """, params)
-        
+            INSERT INTO notes (title, content, user_id) 
+            VALUES (?, ?, ?)
+        """, (
+            request.form.get("title"),
+            request.form.get("content"),
+            session["user_id"]
+        ))
         db.commit()
-        
         return render_template("index.html")
 
     return render_template("index.html")
@@ -99,112 +96,130 @@ def create_new_note():
 
 
 @app.route("/search")
-#@login_required
+@login_required
 def search():
     # Get search parameters
-    q = request.args.get("q", "")
-    search_type = request.args.get("search_type", "OR")  # OR/AND search
+    title_q = request.args.get("title", "")
+    subject_q = request.args.get("subject", "")
+    topic_q = request.args.get("topic", "")
+    content_q = request.args.get("content", "")
+    search_type = request.args.get("search_type", "OR")
+    filter_type = request.args.get("filter_type", "none")
     page = int(request.args.get("page", 1))
     per_page = 10
     
-    if q:
-        # Search with user's query
-        search_term = f"%{q}%"
-        if search_type == "AND":
-            cursor.execute("""
-                SELECT COUNT(*) as count
-                FROM notes
-                WHERE title LIKE ?
-                AND content LIKE ?
-                AND subject LIKE ?
-                AND topic LIKE ?
-            """, (search_term, search_term, search_term, search_term))
-        else:  # OR search
-            cursor.execute("""
-                SELECT COUNT(*) as count
-                FROM notes
-                WHERE title LIKE ?
-                   OR content LIKE ?
-                   OR subject LIKE ?
-                   OR topic LIKE ?
-            """, (search_term, search_term, search_term, search_term))
-    else:
-        # No search term - get total count of all notes
-        cursor.execute("SELECT COUNT(*) as count FROM notes")
+    base_query = """
+        FROM notes 
+        WHERE user_id = ?
+    """
     
+    # Add filter for weakest/untested
+    if filter_type == "weakest":
+        base_query += """
+            AND times_challenged > 0 
+            ORDER BY CAST(times_correct AS FLOAT) / times_challenged ASC
+        """
+    elif filter_type == "untested":
+        base_query += " AND times_challenged = 0"
+    else:
+        # Your existing search logic here
+        if search_type == "AND":
+            base_query += """
+                AND (? = '' OR title LIKE ?)
+                AND (? = '' OR subject LIKE ?)
+                AND (? = '' OR topic LIKE ?)
+                AND (? = '' OR content LIKE ?)
+            """
+        else:  # OR search
+            base_query += """
+                AND ((? != '' AND title LIKE ?)
+                 OR (? != '' AND subject LIKE ?)
+                 OR (? != '' AND topic LIKE ?)
+                 OR (? != '' AND content LIKE ?))
+            """
+    
+    # Get total count
+    count_params = [session["user_id"]]
+    if filter_type not in ["weakest", "untested"]:
+        terms = [f"%{q}%" for q in [title_q, subject_q, topic_q, content_q]]
+        count_params.extend([q for pair in zip([title_q, subject_q, topic_q, content_q], terms) for q in pair])
+    
+    cursor.execute(f"SELECT COUNT(*) as count {base_query}", tuple(count_params))
     total_results = cursor.fetchone()['count']
     total_pages = ceil(total_results / per_page)
     offset = (page - 1) * per_page
     
-    # Get results (either searched or recent)
-    if q:
-        if search_type == "AND":
-            cursor.execute("""
-                SELECT *
-                FROM notes
-                WHERE title LIKE ?
-                AND content LIKE ?
-                AND subject LIKE ?
-                AND topic LIKE ?
-                ORDER BY subject, title
-                LIMIT ? OFFSET ?
-            """, (search_term, search_term, search_term, search_term, per_page, offset))
-        else:
-            cursor.execute("""
-                SELECT *
-                FROM notes
-                WHERE title LIKE ?
-                   OR content LIKE ?
-                   OR subject LIKE ?
-                   OR topic LIKE ?
-                ORDER BY subject, title
-                LIMIT ? OFFSET ?
-            """, (search_term, search_term, search_term, search_term, per_page, offset))
-    else:
-        # No search - show recent notes
-        cursor.execute("""
-            SELECT *
-            FROM notes
-            ORDER BY subject, title
-            LIMIT ? OFFSET ?
-        """, (per_page, offset))
+    # Get results
+    query_params = count_params.copy()
+    cursor.execute(
+        f"""SELECT * {base_query} 
+        LIMIT ? OFFSET ?""",
+        tuple(query_params + [per_page, offset])
+    )
     
     results = cursor.fetchall()
     
     return render_template("search.html",
                          results=results,
-                         query=q,
+                         title_q=title_q,
+                         subject_q=subject_q,
+                         topic_q=topic_q,
+                         content_q=content_q,
                          search_type=search_type,
+                         filter_type=filter_type,
                          page=page,
                          total_pages=total_pages,
                          total_results=total_results)
 
 
 @app.route("/display_note/<int:note_id>")
-# @login_required
+@login_required
 def display_note(note_id):
     """Allow viewing of selected note"""
-    print(f"we are trying to display note id: {note_id}")
-    # user_id = int(session["user_id"])
-    cursor.execute("SELECT * FROM notes WHERE id = ?", (note_id,))
+    cursor.execute("""
+        SELECT * FROM notes 
+        WHERE id = ? AND user_id = ?
+    """, (note_id, session["user_id"]))
     mem_note = cursor.fetchone()
+    
+    if not mem_note:
+        flash("Note not found or access denied")
+        return redirect("/")
+        
     return render_template("display_note.html", this_note=mem_note)
 
 
 
 
 @app.route("/edit_note/<int:note_id>", methods= ['GET', 'POST'])
-# @login_required
+@login_required
 def edit_note(note_id):
     """Allow editing of selected note"""
-    # user_id = int(session["user_id"])
     if request.method == "GET":
-        cursor.execute("SELECT * FROM notes WHERE id = ?", (note_id,))
+        cursor.execute("""
+            SELECT * FROM notes 
+            WHERE id = ? AND user_id = ?
+        """, (note_id, session["user_id"]))
         mem_note = cursor.fetchone()
-        print("we are requesting edit")
+        
+        if not mem_note:
+            flash("Note not found or access denied")
+            return redirect("/")
+            
         return render_template("edit_note.html", this_note=mem_note)
+        
     if request.method == "POST":
-        print("we are posting edit")
+        # Verify note belongs to user before updating
+        cursor.execute("""
+            SELECT user_id FROM notes 
+            WHERE id = ?
+        """, (note_id,))
+        note = cursor.fetchone()
+        
+        if not note or note['user_id'] != session["user_id"]:
+            flash("Note not found or access denied")
+            return redirect("/")
+            
         title = request.form.get("title")
         if not title:
             return apology("Title is required")
@@ -221,9 +236,14 @@ def edit_note(note_id):
         if not topic:
             return apology("Topic is required")
 
-        params = (title, content, subject, topic, note_id)
-        cursor.execute("UPDATE notes SET title = ?, content = ?, subject = ?, topic = ? WHERE id = ?", params)
+        params = (title, content, subject, topic, note_id, session["user_id"])
+        cursor.execute("""
+            UPDATE notes 
+            SET title = ?, content = ?, subject = ?, topic = ? 
+            WHERE id = ? AND user_id = ?
+        """, params)
         db.commit()
+        
         return redirect(url_for('display_note', note_id=note_id))
 
 
@@ -279,9 +299,11 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute(
-            "SELECT * FROM users WHERE username = ?", request.form.get("username")
+        cursor.execute(
+            "SELECT * FROM users WHERE username = ?", 
+            (request.form.get("username"),)
         )
+        rows = cursor.fetchall()
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(
@@ -317,31 +339,45 @@ def logout():
 def register():
     """Register user"""
     if request.method == "POST":
-        # Ensure username was submitted
-        new_user = request.form.get("username")
-        existing_clients = db.execute("SELECT username FROM users")
-        existing_clients = [client['username'] for client in existing_clients]
-        # usernames = [user['username'] for user in existing_clients]
-        if not new_user:
-            return apology("must provide username", 400)
-        if new_user in existing_clients:
-            return apology("please choose a more unique username", 400)
-
-        # user is not already registered
-        # user entered a new username
-        # Ensure password was submitted
+        username = request.form.get("username")
         password = request.form.get("password")
-        if not password:
-            return apology("must provide password", 400)
-        # user entered a password
         confirmation = request.form.get("confirmation")
-        if password != confirmation:
-            return apology("passwords do not match", 400)
-        # have unique name and confirmed password,
-        # hash and register
-        hash = generate_password_hash(password, method='pbkdf2', salt_length=16)
-        db.execute("INSERT INTO users (username, hash) VALUES(?, ?)", new_user, hash)
+        
+        # Validate input
+        if not username:
+            flash("Must provide username")
+            return redirect("/register")
+        elif not password:
+            flash("Must provide password")
+            return redirect("/register")
+        elif not confirmation:
+            flash("Must confirm password")
+            return redirect("/register")
+        elif password != confirmation:
+            flash("Passwords must match")
+            return redirect("/register")
+            
+        # Check if username exists
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        if cursor.fetchone():
+            flash("Username already exists")
+            return redirect("/register")
+            
+        # Add user to database
+        cursor.execute(
+            "INSERT INTO users (username, hash) VALUES (?, ?)",
+            (username, generate_password_hash(password))
+        )
+        db.commit()
+        
+        # Log user in
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
+        session["user_id"] = user["id"]
+        
+        flash("Registered!")
         return redirect("/")
+        
     return render_template("register.html")
 
 
@@ -407,58 +443,72 @@ def flashcards():
     return render_template("flashcards.html", card=None)
 
 @app.route("/record_new_note", methods=["GET", "POST"])
-#@login_required
+@login_required
 def record_new_note():
     if request.method == "GET":
         return render_template("create.html")
     
     if request.method == "POST":
-        title = request.form.get("title")
-        content = request.form.get("content")
-        subject = request.form.get("subject")
-        topic = request.form.get("topic")
-        question = request.form.get("question")
-        correct_answer = request.form.get("correct_answer")
-        wrong_answer1 = request.form.get("wrong_answer1")
-        wrong_answer2 = request.form.get("wrong_answer2")
-        wrong_answer3 = request.form.get("wrong_answer3")
-    
         cursor.execute("""
             INSERT INTO notes (
                 title, content, subject, topic, 
                 question, correct_answer, 
-                wrong_answer1, wrong_answer2, wrong_answer3
+                wrong_answer1, wrong_answer2, wrong_answer3,
+                user_id
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (title, content, subject, topic, 
-              question, correct_answer, 
-              wrong_answer1, wrong_answer2, wrong_answer3))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            request.form.get("title"),
+            request.form.get("content"),
+            request.form.get("subject"),
+            request.form.get("topic"),
+            request.form.get("question"),
+            request.form.get("correct_answer"),
+            request.form.get("wrong_answer1"),
+            request.form.get("wrong_answer2"),
+            request.form.get("wrong_answer3"),
+            session["user_id"]
+        ))
         db.commit()
-        
         return redirect("/")
 
     return render_template("create.html")
 
 
 @app.route("/start_test", methods=["GET", "POST"])
-#@login_required
+@login_required
 def start_test():
     if request.method == "GET":
         return render_template("test_setup.html")
         
-    # Get number of questions from form
+    # Get test parameters
     n = int(request.form.get("question_count", 10))
+    filter_type = request.form.get("filter_type", "random")
     
-    # Get all questions from database
-    cursor.execute("""
+    # Build query based on filter type
+    base_query = """
         SELECT id, title, subject, topic, question, correct_answer, 
                wrong_answer1, wrong_answer2, wrong_answer3 
         FROM notes 
-        WHERE question IS NOT NULL 
+        WHERE user_id = ?
+        AND question IS NOT NULL 
         AND correct_answer IS NOT NULL
-        ORDER BY RANDOM() 
-        LIMIT ?
-    """, (n,))
+    """
+    
+    if filter_type == "weakest":
+        base_query += """
+            AND times_challenged > 0 
+            ORDER BY CAST(times_correct AS FLOAT) / times_challenged ASC
+        """
+    elif filter_type == "untested":
+        base_query += " AND times_challenged = 0 ORDER BY RANDOM()"
+    else:  # random
+        base_query += " ORDER BY RANDOM()"
+    
+    base_query += " LIMIT ?"
+    
+    # Get questions from database
+    cursor.execute(base_query, (session["user_id"], n))
     questions = cursor.fetchall()
     
     # Convert to list of dicts for session storage
@@ -563,7 +613,20 @@ def check_test_answer():
 @app.route("/stats")
 #@login_required
 def show_stats():
-    # Get all notes with their stats
+    page = int(request.args.get("page", 1))
+    per_page = 10
+    
+    # Get total count for pagination
+    cursor.execute("""
+        SELECT COUNT(*) as count
+        FROM notes
+        WHERE times_challenged > 0
+    """)
+    total_results = cursor.fetchone()['count']
+    total_pages = ceil(total_results / per_page)
+    offset = (page - 1) * per_page
+    
+    # Get paginated stats
     cursor.execute("""
         SELECT title, subject, topic, 
                times_challenged, times_correct,
@@ -576,10 +639,16 @@ def show_stats():
         FROM notes
         WHERE times_challenged > 0
         ORDER BY success_rate ASC
-    """)
+        LIMIT ? OFFSET ?
+    """, (per_page, offset))
+    
     stats = cursor.fetchall()
     
-    return render_template("stats.html", stats=stats)
+    return render_template("stats.html", 
+                         stats=stats,
+                         page=page,
+                         total_pages=total_pages,
+                         total_results=total_results)
 
 @app.route("/select_test_questions", methods=["POST"])
 #@login_required
@@ -610,3 +679,15 @@ def get_db():
     db = sqlite3.connect("notes.db")
     db.row_factory = sqlite3.Row
     return db
+
+@app.before_request
+def before_request():
+    g.db = get_db()
+    g.cursor = g.db.cursor()
+
+@app.teardown_request
+def teardown_request(exception):
+    if hasattr(g, 'db'):
+        g.db.close()
+
+app.secret_key = 'your_secret_key_here'  # Change this to a secure value

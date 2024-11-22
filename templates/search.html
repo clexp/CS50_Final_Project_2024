@@ -5,18 +5,30 @@ block main %}
   <div class="card mb-4">
     <div class="card-body">
       <form action="{{ url_for('search') }}" method="get" class="mb-3">
-        <div class="row g-3 align-items-center">
-          <div class="col-md-6">
-            <input
-              type="text"
-              class="form-control"
-              name="q"
-              value="{{ query }}"
-              placeholder="Search notes..."
-            />
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" 
+                   value="{{ title_q }}" placeholder="Search titles...">
           </div>
-          <div class="col-md-3">
-            <select class="form-select" name="search_type">
+          <div class="col-md-6 col-lg-3">
+            <label for="subject" class="form-label">Subject</label>
+            <input type="text" class="form-control" id="subject" name="subject" 
+                   value="{{ subject_q }}" placeholder="Search subjects...">
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <label for="topic" class="form-label">Topic</label>
+            <input type="text" class="form-control" id="topic" name="topic" 
+                   value="{{ topic_q }}" placeholder="Search topics...">
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <label for="content" class="form-label">Content</label>
+            <input type="text" class="form-control" id="content" name="content" 
+                   value="{{ content_q }}" placeholder="Search content...">
+          </div>
+          <div class="col-md-6">
+            <label for="search_type" class="form-label">Search Type</label>
+            <select class="form-select" id="search_type" name="search_type">
               <option value="OR" {% if search_type == 'OR' %}selected{% endif %}>
                 Match Any Field (OR)
               </option>
@@ -25,8 +37,22 @@ block main %}
               </option>
             </select>
           </div>
-          <div class="col-md-3">
-            <button class="btn btn-primary w-100" type="submit">Search</button>
+          <div class="col-md-6">
+            <label for="filter_type" class="form-label">Special Filters</label>
+            <select class="form-select" id="filter_type" name="filter_type">
+              <option value="none" {% if filter_type == 'none' %}selected{% endif %}>
+                No Filter
+              </option>
+              <option value="weakest" {% if filter_type == 'weakest' %}selected{% endif %}>
+                Weakest Performance
+              </option>
+              <option value="untested" {% if filter_type == 'untested' %}selected{% endif %}>
+                Untested Notes
+              </option>
+            </select>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary" type="submit">Search</button>
           </div>
         </div>
       </form>
