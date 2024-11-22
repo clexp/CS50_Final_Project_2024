@@ -1,0 +1,69 @@
+{% extends "layout.html" %} {% block title %}Learning Statistics{% endblock %}
+{% block main %}
+<div class="container">
+  <h2>Learning Progress</h2>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Overall Success Rate</h5>
+          <p class="card-text display-4">
+            {{ (stats|sum(attribute='times_correct') /
+            stats|sum(attribute='times_challenged') * 100)|round(1) }}%
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- Add more summary cards as needed -->
+  </div>
+
+  <!-- Detailed Stats Table -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Subject</th>
+            <th>Topic</th>
+            <th>Times Tested</th>
+            <th>Success Rate</th>
+            <th>Last Tested</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in stats %}
+          <tr>
+            <td>{{ stat.title }}</td>
+            <td>{{ stat.subject }}</td>
+            <td>{{ stat.topic }}</td>
+            <td>{{ stat.times_challenged }}</td>
+            <td>
+              <div class="progress">
+                <div
+                  class="progress-bar {% if stat.success_rate < 50 %}bg-danger {% elif stat.success_rate < 80 %}bg-warning {% else %}bg-success{% endif %}"
+                  role="progressbar"
+                  style="width: {{ stat.success_rate }}%"
+                >
+                  {{ stat.success_rate }}%
+                </div>
+              </div>
+            </td>
+            <td>{{ stat.last_tested }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="text-center mb-4">
+    <a href="{{ url_for('index') }}" class="btn btn-primary"
+      >Return to Main Page</a
+    >
+  </div>
+</div>
+{% endblock %}

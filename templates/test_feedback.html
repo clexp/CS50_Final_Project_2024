@@ -1,0 +1,27 @@
+{% extends "layout.html" %} {% block title %}Answer Feedback{% endblock %} {%
+block main %}
+<div class="container">
+  <div class="card">
+    <div class="card-body text-center">
+      {% if is_correct %}
+      <h5 class="card-title text-success">Correct!</h5>
+      {% else %}
+      <h5 class="card-title text-danger">Incorrect</h5>
+      <p class="card-text">
+        You answered: <span class="text-danger">{{ selected_answer }}</span>
+      </p>
+      <p class="card-text">
+        The correct answer was:
+        <span class="text-success">{{ correct_answer }}</span>
+      </p>
+      {% endif %}
+
+      <div class="mt-4">
+        <a href="{{ url_for('show_test_question') }}" class="btn btn-primary">
+          Next Question
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

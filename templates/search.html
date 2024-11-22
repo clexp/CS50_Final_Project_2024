@@ -1,0 +1,107 @@
+{% extends "layout.html" %} {% block title %}Search Notes{% endblock %} {%
+block main %}
+<div class="container">
+  <!-- Search form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="{{ url_for('search') }}" method="get" class="mb-3">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-6">
+            <input
+              type="text"
+              class="form-control"
+              name="q"
+              value="{{ query }}"
+              placeholder="Search notes..."
+            />
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" name="search_type">
+              <option value="OR" {% if search_type == 'OR' %}selected{% endif %}>
+                Match Any Field (OR)
+              </option>
+              <option value="AND" {% if search_type == 'AND' %}selected{% endif %}>
+                Match All Fields (AND)
+              </option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" type="submit">Search</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Results count -->
+  <div class="alert alert-info">
+    {% if query %}
+      Found {{ total_results }} result{% if total_results != 1 %}s{% endif %}
+      for "{{ query }}"
+    {% else %}
+      Showing {{ total_results }} most recent notes
+    {% endif %}
+  </div>
+
+  <!-- Results list -->
+  {% if results %}
+  <div class="list-group mb-4">
+    {% for result in results %}
+    <a
+      href="{{ url_for('display_note', note_id=result.id) }}"
+      class="list-group-item list-group-item-action"
+    >
+      <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1">{{ result.title }}</h5>
+        <small class="text-muted">{{ result.subject }}</small>
+      </div>
+      <p class="mb-1">{{ result.content[:200] }}...</p>
+      <small class="text-muted">
+        Topic: {{ result.topic }}
+        {% if result.date %}
+          | Added: {{ result.date }}
+        {% endif %}
+      </small>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if total_pages > 1 %}
+  <nav aria-label="Search results pages">
+    <ul class="pagination justify-content-center">
+      <!-- Previous button -->
+      <li class="page-item {% if page == 1 %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('search', q=query, page=page-1) }}">Previous</a>
+      </li>
+      
+      <!-- Page numbers -->
+      {% set start_page = [1, (page|int - 2)]|max %}
+      {% set end_page = [(total_pages|int), (page|int + 2)]|min %}
+      
+      {% for p in range(start_page, end_page + 1) %}
+        <li class="page-item {% if p == page|int %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('search', q=query, page=p) }}">{{ p }}</a>
+        </li>
+      {% endfor %}
+      
+      <!-- Next button -->
+      <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('search', q=query, page=page+1) }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %} {% else %}
+  <div class="alert alert-warning">
+    No notes found{% if query %} matching "{{ query }}"{% endif %}.
+  </div>
+  {% endif %}
+
+  <!-- Return button -->
+  <div class="text-center mt-4">
+    <a href="{{ url_for('index') }}" class="btn btn-primary"
+      >Return to Main Page</a
+    >
+  </div>
+</div>
+{% endblock %}

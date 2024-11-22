@@ -1,0 +1,95 @@
+{% extends "layout.html" %} {% block title %} Write New Mem Note {% endblock %}
+{% block main %}
+<form action="/record_new_note" method="post">
+  <!-- First row with three columns -->
+  <div class="row mb-3">
+    <div class="col">
+      <input
+        autocomplete="off"
+        autofocus
+        class="form-control"
+        name="title"
+        placeholder="Note Title"
+        type="text"
+      />
+    </div>
+    <div class="col">
+      <input
+        class="form-control"
+        name="subject"
+        placeholder="Note Subject"
+        type="text"
+      />
+    </div>
+    <div class="col">
+      <input
+        class="form-control"
+        name="topic"
+        placeholder="Note Topic"
+        type="text"
+      />
+    </div>
+  </div>
+  <!-- Second row with full-width content textarea -->
+  <div class="mb-3">
+    <textarea
+      class="form-control"
+      name="content"
+      placeholder="Note Content"
+      rows="10"
+      style="width: 100%"
+    ></textarea>
+  </div>
+
+  <!-- New multiple choice section -->
+  <div class="mb-3">
+    <h5>Multiple Choice Question (Optional)</h5>
+    <div class="mb-3">
+      <textarea
+        class="form-control"
+        name="question"
+        placeholder="Question"
+        rows="2"
+      ></textarea>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label text-success">Correct Answer</label>
+        <input
+          type="text"
+          class="form-control"
+          name="correct_answer"
+          placeholder="Correct Answer"
+        />
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label text-danger">Incorrect Answers</label>
+        <input
+          type="text"
+          class="form-control mb-2"
+          name="wrong_answer1"
+          placeholder="Wrong Answer 1"
+        />
+        <input
+          type="text"
+          class="form-control mb-2"
+          name="wrong_answer2"
+          placeholder="Wrong Answer 2"
+        />
+        <input
+          type="text"
+          class="form-control"
+          name="wrong_answer3"
+          placeholder="Wrong Answer 3"
+        />
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" type="submit">Save New Mem Note</button>
+</form>
+{% endblock %}

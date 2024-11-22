@@ -1,0 +1,40 @@
+{% extends "layout.html" %} {% block title %}Test Question {{
+progress.current}}/{{ progress.total }}{% endblock %} {% block main %}
+<div class="container">
+  <div class="progress mb-3">
+    <div
+      class="progress-bar"
+      role="progressbar"
+      style="width: {{ (progress.current / progress.total) * 100 }}%"
+    >
+      Question {{ progress.current }}/{{ progress.total }}
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header">
+      <div class="d-flex justify-content-between">
+        <span>{{ question.subject }} - {{ question.topic }}</span>
+        <span>{{ question.title }}</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">Question:</h5>
+      <p class="card-text mb-4">{{ question.question }}</p>
+
+      <form action="{{ url_for('check_test_answer') }}" method="post">
+        {% for answer in shuffled_answers %}
+        <button
+          type="submit"
+          name="answer"
+          value="{{ answer }}"
+          class="btn btn-outline-primary w-100 mb-2"
+        >
+          {{ answer }}
+        </button>
+        {% endfor %}
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

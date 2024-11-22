@@ -1,0 +1,77 @@
+{% extends "layout.html" %} {% block title %}Practice Flashcards{% endblock %}
+{% block main %}
+<div class="container">
+  {% if card %}
+  <div class="card mb-3">
+    <div class="card-header">
+      <div class="d-flex justify-content-between">
+        <span>{{ card.subject }} - {{ card.topic }}</span>
+        <span>{{ card.title }}</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">Question:</h5>
+      <p class="card-text mb-4">{{ card.question }}</p>
+
+      <div id="choices" class="mb-4">
+        {% for answer in shuffled_answers %}
+        <button
+          class="btn btn-outline-primary w-100 mb-2 answer-btn"
+          onclick="checkAnswer(this, '{{ card.correct_answer }}')"
+          data-answer="{{ answer }}"
+        >
+          {{ answer }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <div id="feedback" class="alert" style="display: none"></div>
+
+      <div class="mt-3">
+        <a
+          href="{{ url_for('flashcards') }}"
+          class="btn btn-secondary"
+          id="next-btn"
+          style="display: none"
+          >Next Card</a
+        >
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    No flashcards available. Add questions to your notes to create flashcards!
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  function checkAnswer(button, correctAnswer) {
+    // Disable all buttons
+    document.querySelectorAll(".answer-btn").forEach((btn) => {
+      btn.disabled = true;
+      if (btn.dataset.answer === correctAnswer) {
+        btn.classList.remove("btn-outline-primary");
+        btn.classList.add("btn-success");
+      }
+    });
+
+    // Show feedback
+    const feedback = document.getElementById("feedback");
+    if (button.dataset.answer === correctAnswer) {
+      feedback.classList.add("alert-success");
+      feedback.textContent = "Correct!";
+    } else {
+      feedback.classList.add("alert-danger");
+      feedback.textContent =
+        "Incorrect. The correct answer is: " + correctAnswer;
+      button.classList.remove("btn-outline-primary");
+      button.classList.add("btn-danger");
+    }
+    feedback.style.display = "block";
+
+    // Show next button
+    document.getElementById("next-btn").style.display = "block";
+  }
+</script>
+{% endblock %}

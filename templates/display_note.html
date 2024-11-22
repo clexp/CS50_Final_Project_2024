@@ -1,0 +1,55 @@
+{% extends "layout.html" %} {% block title %} View Mem Note {% endblock %} {%
+block main %}
+<div class="container">
+  <!-- First row with three columns -->
+  <div class="row mb-3">
+    <div class="col">
+      <h5>Title</h5>
+      <div class="form-control" style="min-height: 38px">
+        {{ this_note.title }}
+      </div>
+    </div>
+    <div class="col">
+      <h5>Subject</h5>
+      <div class="form-control" style="min-height: 38px">
+        {{ this_note.subject }}
+      </div>
+    </div>
+    <div class="col">
+      <h5>Topic</h5>
+      <div class="form-control" style="min-height: 38px">
+        {{ this_note.topic }}
+      </div>
+    </div>
+  </div>
+  <!-- Second row with full-width content -->
+  <div class="mb-3">
+    <h5>Content</h5>
+    <div class="form-control" style="min-height: 200px">
+      {{ this_note.content }}
+    </div>
+  </div>
+  <div class="d-flex justify-content-between">
+    <div>
+      <a href="/edit_note/{{ this_note.id }}" class="btn btn-primary me-2"
+        >Edit Note</a
+      >
+      <a href="/search" class="btn btn-secondary">Return to Search</a>
+    </div>
+    <form
+      action="/delete_note/{{ this_note.id }}"
+      method="post"
+      style="display: inline"
+    >
+      <button
+        type="submit"
+        class="btn btn-danger"
+        onclick="return confirm('Are you sure you want to delete this note?')"
+      >
+        Delete Note
+      </button>
+    </form>
+  </div>
+  </div>
+</div>
+{% endblock %}
