@@ -409,3 +409,34 @@ I want to use git and github for this. I can't do this on the cs50 remote vm. Th
 39. Put it on a remotely accessible server.
 40. Share it with others.
 41. People can save out and load in mem notes sets.
+
+### Web Design
+
+#### Define
+
+- who : this is for a learner of any age.
+- what : this is designed to be a simple note logger, with a flashcard function. As a stretch goal it can track poorly memorized notes.
+
+#### Plan
+
+- This is as above, with milestones and dates
+
+#### Build
+
+- Mostly done at time of typing
+
+#### Test
+
+- test it on all browsers
+- test it on desktop and mobile
+- test it on different screen sizes
+- test it on different devices
+
+#### Deploy
+
+- this really mean submit the project to the CS50 marker
+- it also means put it on a publicly accessible server
+- and make a video
+- and submit the video to youtube
+- start using it myself
+- open accessibility to Rowenna
