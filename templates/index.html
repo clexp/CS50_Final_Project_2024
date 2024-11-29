@@ -7,8 +7,17 @@
       {% if total_notes == 0 %}
       <p class="text-center">
         No notes yet. Start by
-        <a href="{{ url_for('record_new_note') }}">creating a new note</a>!
+        <a href="{{ url_for('record_new_note') }}">creating a new note</a>
+        or import our test set:
       </p>
+      <div class="text-center mt-3">
+        <a
+          href="{{ url_for('handle_import_test_set') }}"
+          class="btn btn-primary"
+          onclick="return confirm('Import test set? This will add sample notes to your database.')"
+          >Import Test Set</a
+        >
+      </div>
       {% else %}
       <p class="text-center">
         You have {{ total_notes }} note{% if total_notes != 1 %}s{% endif %} in

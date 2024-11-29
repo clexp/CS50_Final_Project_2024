@@ -1,116 +1,165 @@
-{% extends "layout.html" %} {% block title %} Edit Mem Note {% endblock %} {%
-block main %}
-<form action="/edit_note/{{ this_note.id }}" method="post">
-  <!-- First row with three columns -->
-  <div class="row mb-3">
-    <div class="col">
-      <h5>Title</h5>
-      <input
-        autocomplete="off"
-        autofocus
-        class="form-control"
-        name="title"
-        placeholder="Note Title"
-        type="text"
-        value="{{ this_note.title }}"
-      />
-    </div>
-    <div class="col">
-      <h5>Subject</h5>
-      <input
-        class="form-control"
-        name="subject"
-        placeholder="Note Subject"
-        type="text"
-        value="{{ this_note.subject }}"
-      />
-    </div>
-    <div class="col">
-      <h5>Topic</h5>
-      <input
-        class="form-control"
-        name="topic"
-        placeholder="Note Topic"
-        type="text"
-        value="{{ this_note.topic }}"
-      />
-    </div>
+{% extends "layout.html" %} {% block title %} Edit Note {% endblock %} {% block
+main %}
+<div class="container">
+  <!-- Add the Manage Tags link at the top -->
+  <div class="text-end mb-3">
+    <a href="{{ url_for('manage_tags') }}" class="btn btn-outline-primary">
+      Manage Tags
+    </a>
   </div>
-  <!-- Second row with content -->
-  <div class="mb-3">
-    <h5>Content</h5>
-    <textarea
-      class="form-control"
-      name="content"
-      placeholder="Note Content"
-      rows="10"
-      style="width: 100%"
-    >
-{{ this_note.content }}</textarea
-    >
-  </div>
-  <!-- Multiple Choice Question section -->
-  <div class="mb-3">
-    <h5>Multiple Choice Question (Optional)</h5>
-    <div class="mb-3">
-      <textarea
-        class="form-control"
-        name="question"
-        placeholder="Question"
-        rows="2"
-      >
-{{ this_note.question }}</textarea
-      >
-    </div>
 
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label text-success">Correct Answer</label>
-        <input
-          type="text"
-          class="form-control"
-          name="correct_answer"
-          placeholder="Correct Answer"
-          value="{{ this_note.correct_answer }}"
-        />
-      </div>
-    </div>
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">Edit Note</h2>
+      <form action="{{ url_for('edit_note', note_id=note.id) }}" method="post">
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input
+            type="text"
+            class="form-control"
+            id="title"
+            name="title"
+            value="{{ note.title }}"
+            required
+          />
+        </div>
 
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label text-danger">Incorrect Answers</label>
-        <input
-          type="text"
-          class="form-control mb-2"
-          name="wrong_answer1"
-          placeholder="Wrong Answer 1"
-          value="{{ this_note.wrong_answer1 }}"
-        />
-        <input
-          type="text"
-          class="form-control mb-2"
-          name="wrong_answer2"
-          placeholder="Wrong Answer 2"
-          value="{{ this_note.wrong_answer2 }}"
-        />
-        <input
-          type="text"
-          class="form-control"
-          name="wrong_answer3"
-          placeholder="Wrong Answer 3"
-          value="{{ this_note.wrong_answer3 }}"
-        />
-      </div>
+        <div class="mb-3">
+          <label for="subject" class="form-label">Subject</label>
+          <input
+            type="text"
+            class="form-control"
+            id="subject"
+            name="subject"
+            value="{{ note.subject }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="topic" class="form-label">Topic</label>
+          <input
+            type="text"
+            class="form-control"
+            id="topic"
+            name="topic"
+            value="{{ note.topic }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="content" class="form-label">Content</label>
+          <textarea
+            class="form-control"
+            id="content"
+            name="content"
+            rows="4"
+            required
+          >
+{{ note.content }}</textarea
+          >
+        </div>
+
+        <div class="mb-3">
+          <label for="question" class="form-label">Question (Optional)</label>
+          <input
+            type="text"
+            class="form-control"
+            id="question"
+            name="question"
+            value="{{ note.question }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="correct_answer" class="form-label">Correct Answer</label>
+          <input
+            type="text"
+            class="form-control"
+            id="correct_answer"
+            name="correct_answer"
+            value="{{ note.correct_answer }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="wrong_answer1" class="form-label">Wrong Answer 1</label>
+          <input
+            type="text"
+            class="form-control"
+            id="wrong_answer1"
+            name="wrong_answer1"
+            value="{{ note.wrong_answer1 }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="wrong_answer2" class="form-label">Wrong Answer 2</label>
+          <input
+            type="text"
+            class="form-control"
+            id="wrong_answer2"
+            name="wrong_answer2"
+            value="{{ note.wrong_answer2 }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="wrong_answer3" class="form-label">Wrong Answer 3</label>
+          <input
+            type="text"
+            class="form-control"
+            id="wrong_answer3"
+            name="wrong_answer3"
+            value="{{ note.wrong_answer3 }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <h5>Tags</h5>
+          <div
+            class="border rounded p-3"
+            style="max-height: 200px; overflow-y: auto"
+          >
+            {% if tags %} {% for tag in tags %}
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                name="tags"
+                value="{{ tag.id }}"
+                id="tag{{ tag.id }}"
+                {%
+                if
+                tag.id
+                in
+                selected_tag_ids
+                %}checked{%
+                endif
+                %}
+              />
+              <label class="form-check-label" for="tag{{ tag.id }}">
+                {{ tag.name }}
+              </label>
+            </div>
+            {% endfor %} {% else %}
+            <p class="text-muted">
+              No tags available. Use the Manage Tags button above to create
+              some.
+            </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <a
+            href="{{ url_for('display_note', note_id=note.id) }}"
+            class="btn btn-secondary"
+            >Cancel</a
+          >
+        </div>
+      </form>
     </div>
   </div>
-  <div class="d-flex justify-content-between">
-    <div>
-      <button class="btn btn-primary me-2" type="submit">Save Changes</button>
-      <a href="/search" class="btn btn-secondary">Return to Search</a>
-    </div>
-    <a href="/display_note/{{ this_note.id }}" class="btn btn-secondary"
-      >Cancel</a
-    >
-  </div>
-</form>
+</div>
 {% endblock %}

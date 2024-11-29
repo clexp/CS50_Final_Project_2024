@@ -1,31 +1,76 @@
 /* Size for brand */
-nav .navbar-brand
-{
-    font-size: xx-large;
+nav .navbar-brand {
+  font-size: xx-large;
 }
 
 /* Colors for brand */
-nav .navbar-brand .blue
-{
-    color: #537fbe;
+nav .navbar-brand .blue {
+  color: #537fbe;
 }
-nav .navbar-brand .red
-{
-    color: #ea433b;
+nav .navbar-brand .red {
+  color: #ea433b;
 }
-nav .navbar-brand .yellow
-{
-    color: #f5b82e;
+nav .navbar-brand .yellow {
+  color: #f5b82e;
 }
-nav .navbar-brand .green
-{
-    color: #2e944b;
+nav .navbar-brand .green {
+  color: #2e944b;
 }
 
 /* spacing on the quote webpage */
 .aside {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
 }
 
+/* Body styles */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Footer styles */
+footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 0;
+  margin-top: auto;
+  color: #000080;
+  width: 100%;
+}
+
+/* Navbar styles */
+.navbar-light .navbar-nav .nav-link {
+  color: #000080 !important;
+}
+
+.navbar-light .navbar-brand {
+  color: #000080 !important;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+  color: #0000b3 !important;
+}
+
+/* Container width control */
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1200px;
+  }
+}
+
+/* Add this to your existing CSS */
+.navbar-nav .nav-link.text-primary {
+  font-weight: 500;
+  padding-right: 1rem;
+}

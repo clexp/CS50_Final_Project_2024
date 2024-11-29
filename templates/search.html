@@ -1,133 +1,97 @@
-{% extends "layout.html" %} {% block title %}Search Notes{% endblock %} {%
-block main %}
+{% extends "layout.html" %} {% block title %}Search Notes{% endblock %} {% block
+main %}
 <div class="container">
-  <!-- Search form -->
-  <div class="card mb-4">
+  <div class="card">
     <div class="card-body">
-      <form action="{{ url_for('search') }}" method="get" class="mb-3">
-        <div class="row g-3">
-          <div class="col-md-6 col-lg-3">
-            <label for="title" class="form-label">Title</label>
-            <input type="text" class="form-control" id="title" name="title" 
-                   value="{{ title_q }}" placeholder="Search titles...">
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <label for="subject" class="form-label">Subject</label>
-            <input type="text" class="form-control" id="subject" name="subject" 
-                   value="{{ subject_q }}" placeholder="Search subjects...">
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <label for="topic" class="form-label">Topic</label>
-            <input type="text" class="form-control" id="topic" name="topic" 
-                   value="{{ topic_q }}" placeholder="Search topics...">
-          </div>
-          <div class="col-md-6 col-lg-3">
-            <label for="content" class="form-label">Content</label>
-            <input type="text" class="form-control" id="content" name="content" 
-                   value="{{ content_q }}" placeholder="Search content...">
-          </div>
-          <div class="col-md-6">
-            <label for="search_type" class="form-label">Search Type</label>
-            <select class="form-select" id="search_type" name="search_type">
-              <option value="OR" {% if search_type == 'OR' %}selected{% endif %}>
-                Match Any Field (OR)
-              </option>
-              <option value="AND" {% if search_type == 'AND' %}selected{% endif %}>
-                Match All Fields (AND)
-              </option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label for="filter_type" class="form-label">Special Filters</label>
-            <select class="form-select" id="filter_type" name="filter_type">
-              <option value="none" {% if filter_type == 'none' %}selected{% endif %}>
-                No Filter
-              </option>
-              <option value="weakest" {% if filter_type == 'weakest' %}selected{% endif %}>
-                Weakest Performance
-              </option>
-              <option value="untested" {% if filter_type == 'untested' %}selected{% endif %}>
-                Untested Notes
-              </option>
-            </select>
-          </div>
-          <div class="col-12">
-            <button class="btn btn-primary" type="submit">Search</button>
+      <h2 class="card-title text-center mb-4">Search Notes</h2>
+
+      <form action="{{ url_for('search') }}" method="get">
+        <!-- Text search -->
+        <div class="mb-4">
+          <label for="q" class="form-label">Search Text</label>
+          <input
+            type="text"
+            class="form-control"
+            id="q"
+            name="q"
+            placeholder="Search in titles, content, subjects, and topics..."
+            value="{{ query }}"
+          />
+        </div>
+
+        <!-- Tag selection -->
+        <div class="mb-4">
+          <label class="form-label">Filter by Tags</label>
+          <div
+            class="border rounded p-3"
+            style="max-height: 200px; overflow-y: auto"
+          >
+            {% if all_tags %} {% for tag in all_tags %}
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                name="tags"
+                value="{{ tag.id }}"
+                id="tag{{ tag.id }}"
+                {%
+                if
+                tag.id|string
+                in
+                selected_tags
+                %}checked{%
+                endif
+                %}
+              />
+              <label class="form-check-label" for="tag{{ tag.id }}">
+                {{ tag.name }}
+              </label>
+            </div>
+            {% endfor %} {% else %}
+            <p class="text-muted">No tags available</p>
+            {% endif %}
           </div>
         </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Search</button>
+          {% if query or selected_tags %}
+          <a href="{{ url_for('search') }}" class="btn btn-outline-secondary"
+            >Clear Search</a
+          >
+          {% endif %}
+        </div>
       </form>
-    </div>
-  </div>
 
-  <!-- Results count -->
-  <div class="alert alert-info">
-    {% if query %}
-      Found {{ total_results }} result{% if total_results != 1 %}s{% endif %}
-      for "{{ query }}"
-    {% else %}
-      Showing {{ total_results }} most recent notes
-    {% endif %}
-  </div>
-
-  <!-- Results list -->
-  {% if results %}
-  <div class="list-group mb-4">
-    {% for result in results %}
-    <a
-      href="{{ url_for('display_note', note_id=result.id) }}"
-      class="list-group-item list-group-item-action"
-    >
-      <div class="d-flex w-100 justify-content-between">
-        <h5 class="mb-1">{{ result.title }}</h5>
-        <small class="text-muted">{{ result.subject }}</small>
+      <!-- Search results -->
+      {% if notes %}
+      <div class="mt-4">
+        <h3>Search Results ({{ notes|length }} found)</h3>
+        <div class="list-group">
+          {% for note in notes %}
+          <a
+            href="{{ url_for('display_note', note_id=note.id) }}"
+            class="list-group-item list-group-item-action"
+          >
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ note.title }}</h5>
+              <small>{{ note.date }}</small>
+            </div>
+            <p class="mb-1">{{ note.content[:200] }}...</p>
+            <small
+              >Subject: {{ note.subject or 'Not specified' }} | Topic: {{
+              note.topic or 'Not specified' }}</small
+            >
+          </a>
+          {% endfor %}
+        </div>
       </div>
-      <p class="mb-1">{{ result.content[:200] }}...</p>
-      <small class="text-muted">
-        Topic: {{ result.topic }}
-        {% if result.date %}
-          | Added: {{ result.date }}
-        {% endif %}
-      </small>
-    </a>
-    {% endfor %}
-  </div>
-
-  <!-- Pagination -->
-  {% if total_pages > 1 %}
-  <nav aria-label="Search results pages">
-    <ul class="pagination justify-content-center">
-      <!-- Previous button -->
-      <li class="page-item {% if page == 1 %}disabled{% endif %}">
-        <a class="page-link" href="{{ url_for('search', q=query, page=page-1) }}">Previous</a>
-      </li>
-      
-      <!-- Page numbers -->
-      {% set start_page = [1, (page|int - 2)]|max %}
-      {% set end_page = [(total_pages|int), (page|int + 2)]|min %}
-      
-      {% for p in range(start_page, end_page + 1) %}
-        <li class="page-item {% if p == page|int %}active{% endif %}">
-          <a class="page-link" href="{{ url_for('search', q=query, page=p) }}">{{ p }}</a>
-        </li>
-      {% endfor %}
-      
-      <!-- Next button -->
-      <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-        <a class="page-link" href="{{ url_for('search', q=query, page=page+1) }}">Next</a>
-      </li>
-    </ul>
-  </nav>
-  {% endif %} {% else %}
-  <div class="alert alert-warning">
-    No notes found{% if query %} matching "{{ query }}"{% endif %}.
-  </div>
-  {% endif %}
-
-  <!-- Return button -->
-  <div class="text-center mt-4">
-    <a href="{{ url_for('index') }}" class="btn btn-primary"
-      >Return to Main Page</a
-    >
+      {% elif query or selected_tags %}
+      <div class="alert alert-info mt-4">
+        No notes found matching your search criteria.
+      </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}

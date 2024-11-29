@@ -1,0 +1,202 @@
+{% extends "layout.html" %} {% block title %} Manage Tags {% endblock %} {%
+block main %}
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">Tag Management</h2>
+
+      <!-- Search and Add new tag row -->
+      <div class="row mb-4">
+        <!-- Search form -->
+        <div class="col-md-8">
+          <form
+            action="{{ url_for('manage_tags') }}"
+            method="get"
+            class="d-flex"
+          >
+            <input
+              type="text"
+              name="search"
+              class="form-control me-2"
+              placeholder="Search tags..."
+              value="{{ search }}"
+            />
+            <button type="submit" class="btn btn-outline-primary">
+              Search
+            </button>
+            {% if search %}
+            <a
+              href="{{ url_for('manage_tags') }}"
+              class="btn btn-outline-secondary ms-2"
+              >Clear</a
+            >
+            {% endif %}
+          </form>
+        </div>
+
+        <!-- Add new tag form -->
+        <div class="col-md-4">
+          <form
+            action="{{ url_for('manage_tags') }}"
+            method="post"
+            class="d-flex"
+          >
+            <input type="hidden" name="action" value="add" />
+            <input
+              type="text"
+              name="tag_name"
+              class="form-control me-2"
+              placeholder="New tag name"
+              required
+            />
+            <button type="submit" class="btn btn-primary">Add</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tags count -->
+      <p class="text-muted">
+        Showing {{ tags|length }} of {{ total_tags }} tags {% if search
+        %}matching "{{ search }}"{% endif %}
+      </p>
+
+      <!-- Tags list -->
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Tag Name</th>
+              <th>Created</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tag in tags %}
+            <tr>
+              <td>
+                <span class="tag-name" id="tag-name-{{ tag.id }}">
+                  {{ tag.name }}
+                </span>
+                <form
+                  action="{{ url_for('manage_tags') }}"
+                  method="post"
+                  class="edit-form d-none"
+                  id="edit-form-{{ tag.id }}"
+                >
+                  <input type="hidden" name="action" value="edit" />
+                  <input type="hidden" name="tag_id" value="{{ tag.id }}" />
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      name="new_name"
+                      class="form-control form-control-sm"
+                      value="{{ tag.name }}"
+                      required
+                    />
+                    <button type="submit" class="btn btn-success btn-sm">
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm cancel-edit"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </td>
+              <td>{{ tag.created_at }}</td>
+              <td class="text-end">
+                <button
+                  class="btn btn-outline-primary btn-sm edit-tag"
+                  data-tag-id="{{ tag.id }}"
+                >
+                  Edit
+                </button>
+                <form
+                  action="{{ url_for('manage_tags') }}"
+                  method="post"
+                  class="d-inline"
+                >
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="tag_id" value="{{ tag.id }}" />
+                  <button
+                    type="submit"
+                    class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('Delete this tag?')"
+                  >
+                    Delete
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if total_pages > 1 %}
+      <nav aria-label="Tag pages" class="mt-4">
+        <ul class="pagination justify-content-center">
+          <li class="page-item {{ 'disabled' if page == 1 }}">
+            <a
+              class="page-link"
+              href="{{ url_for('manage_tags', page=page-1, search=search) if page > 1 else '#' }}"
+            >
+              Previous
+            </a>
+          </li>
+
+          {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+          <li class="page-item {{ 'active' if p == page }}">
+            <a
+              class="page-link"
+              href="{{ url_for('manage_tags', page=p, search=search) }}"
+            >
+              {{ p }}
+            </a>
+          </li>
+          {% endfor %}
+
+          <li class="page-item {{ 'disabled' if page == total_pages }}">
+            <a
+              class="page-link"
+              href="{{ url_for('manage_tags', page=page+1, search=search) if page < total_pages else '#' }}"
+            >
+              Next
+            </a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Add this JavaScript at the bottom of the template -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Edit button handlers
+    document.querySelectorAll(".edit-tag").forEach((button) => {
+      button.addEventListener("click", function () {
+        const tagId = this.dataset.tagId;
+        document.getElementById(`tag-name-${tagId}`).classList.add("d-none");
+        document
+          .getElementById(`edit-form-${tagId}`)
+          .classList.remove("d-none");
+      });
+    });
+
+    // Cancel button handlers
+    document.querySelectorAll(".cancel-edit").forEach((button) => {
+      button.addEventListener("click", function () {
+        const form = this.closest("form");
+        const tagId = form.querySelector('[name="tag_id"]').value;
+        form.classList.add("d-none");
+        document.getElementById(`tag-name-${tagId}`).classList.remove("d-none");
+      });
+    });
+  });
+</script>
+{% endblock %}

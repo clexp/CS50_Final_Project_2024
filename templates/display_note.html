@@ -1,55 +1,53 @@
-{% extends "layout.html" %} {% block title %} View Mem Note {% endblock %} {%
+{% extends "layout.html" %} {% block title %} Note Details {% endblock %} {%
 block main %}
 <div class="container">
-  <!-- First row with three columns -->
-  <div class="row mb-3">
-    <div class="col">
-      <h5>Title</h5>
-      <div class="form-control" style="min-height: 38px">
-        {{ this_note.title }}
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title">{{ note.title }}</h2>
+
+      {% if tags %}
+      <div class="mb-3">
+        <h6 class="text-muted">Tags:</h6>
+        <div class="d-flex flex-wrap gap-2">
+          {% for tag in tags %}
+          <span class="badge bg-secondary">{{ tag.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="card-text">
+        <p><strong>Subject:</strong> {{ note.subject or 'Not specified' }}</p>
+        <p><strong>Topic:</strong> {{ note.topic or 'Not specified' }}</p>
+        <p><strong>Content:</strong></p>
+        <p>{{ note.content }}</p>
+
+        {% if note.question %}
+        <div class="mt-4">
+          <p><strong>Question:</strong> {{ note.question }}</p>
+          <p><strong>Correct Answer:</strong> {{ note.correct_answer }}</p>
+          {% if note.wrong_answer1 %}
+          <p><strong>Alternative Answer 1:</strong> {{ note.wrong_answer1 }}</p>
+          {% endif %} {% if note.wrong_answer2 %}
+          <p><strong>Alternative Answer 2:</strong> {{ note.wrong_answer2 }}</p>
+          {% endif %} {% if note.wrong_answer3 %}
+          <p><strong>Alternative Answer 3:</strong> {{ note.wrong_answer3 }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="mt-4">
+        <a
+          href="{{ url_for('edit_note', note_id=note.id) }}"
+          class="btn btn-primary"
+          >Edit Note</a
+        >
+        <a href="{{ url_for('index') }}" class="btn btn-secondary"
+          >Back to Notes</a
+        >
       </div>
     </div>
-    <div class="col">
-      <h5>Subject</h5>
-      <div class="form-control" style="min-height: 38px">
-        {{ this_note.subject }}
-      </div>
-    </div>
-    <div class="col">
-      <h5>Topic</h5>
-      <div class="form-control" style="min-height: 38px">
-        {{ this_note.topic }}
-      </div>
-    </div>
-  </div>
-  <!-- Second row with full-width content -->
-  <div class="mb-3">
-    <h5>Content</h5>
-    <div class="form-control" style="min-height: 200px">
-      {{ this_note.content }}
-    </div>
-  </div>
-  <div class="d-flex justify-content-between">
-    <div>
-      <a href="/edit_note/{{ this_note.id }}" class="btn btn-primary me-2"
-        >Edit Note</a
-      >
-      <a href="/search" class="btn btn-secondary">Return to Search</a>
-    </div>
-    <form
-      action="/delete_note/{{ this_note.id }}"
-      method="post"
-      style="display: inline"
-    >
-      <button
-        type="submit"
-        class="btn btn-danger"
-        onclick="return confirm('Are you sure you want to delete this note?')"
-      >
-        Delete Note
-      </button>
-    </form>
-  </div>
   </div>
 </div>
 {% endblock %}

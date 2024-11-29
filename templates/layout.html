@@ -12,49 +12,6 @@
       rel="stylesheet"
     />
     <link href="/static/styles.css" rel="stylesheet" />
-
-    <style>
-      body {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      main {
-        flex: 1;
-        max-width: 1200px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 2rem;
-      }
-
-      footer {
-        background-color: #f8f9fa;
-        border-top: 1px solid #dee2e6;
-        padding: 1rem 0;
-        margin-top: auto;
-        color: #000080;
-        width: 100%;
-      }
-
-      /* Navbar styles */
-      .navbar-light .navbar-nav .nav-link {
-        color: #000080 !important;
-      }
-      .navbar-light .navbar-brand {
-        color: #000080 !important;
-      }
-      .navbar-light .navbar-nav .nav-link:hover {
-        color: #0000b3 !important;
-      }
-
-      /* Container width control */
-      @media (min-width: 1400px) {
-        .container {
-          max-width: 1200px;
-        }
-      }
-    </style>
   </head>
 
   <body>
@@ -88,6 +45,11 @@
             </li>
           </ul>
           <ul class="navbar-nav ms-auto mt-2">
+            <li class="nav-item">
+              <span class="nav-link text-primary"
+                >{{ session["username"] }}</span
+              >
+            </li>
             <li class="nav-item">
               <a class="nav-link" href="/logout">Log Out</a>
             </li>
