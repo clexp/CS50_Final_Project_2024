@@ -5,7 +5,16 @@ main %}
     <div class="card-body">
       <h2 class="card-title text-center mb-4">Search Notes</h2>
 
-      <form action="{{ url_for('search') }}" method="get">
+      {% if has_test_set %}
+      <a
+        href="{{ url_for('remove_test_set') }}"
+        class="btn btn-outline-danger"
+        onclick="return confirm('Are you sure you want to remove all test set notes?')"
+        >Remove Test Set</a
+      >
+      {% endif %}
+
+      <form action="{{ url_for('search') }}" method="post" id="searchForm">
         <!-- Text search -->
         <div class="mb-4">
           <label for="q" class="form-label">Search Text</label>
@@ -14,52 +23,19 @@ main %}
             class="form-control"
             id="q"
             name="q"
-            placeholder="Search in titles, content, subjects, and topics..."
-            value="{{ query }}"
+            placeholder="Search in titles and content..."
+            value="{{ query if query }}"
           />
         </div>
 
-        <!-- Tag selection -->
-        <div class="mb-4">
-          <label class="form-label">Filter by Tags</label>
-          <div
-            class="border rounded p-3"
-            style="max-height: 200px; overflow-y: auto"
-          >
-            {% if all_tags %} {% for tag in all_tags %}
-            <div class="form-check form-check-inline">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                name="tags"
-                value="{{ tag.id }}"
-                id="tag{{ tag.id }}"
-                {%
-                if
-                tag.id|string
-                in
-                selected_tags
-                %}checked{%
-                endif
-                %}
-              />
-              <label class="form-check-label" for="tag{{ tag.id }}">
-                {{ tag.name }}
-              </label>
-            </div>
-            {% endfor %} {% else %}
-            <p class="text-muted">No tags available</p>
-            {% endif %}
-          </div>
-        </div>
+        <!-- Include tag search component -->
+        {% include 'components/tag_search.html' %}
 
         <div class="d-grid gap-2">
           <button type="submit" class="btn btn-primary">Search</button>
-          {% if query or selected_tags %}
           <a href="{{ url_for('search') }}" class="btn btn-outline-secondary"
             >Clear Search</a
           >
-          {% endif %}
         </div>
       </form>
 
@@ -94,4 +70,22 @@ main %}
     </div>
   </div>
 </div>
+
+<!-- Include the external JavaScript file -->
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tag_search.js') }}"></script>
+{% endblock %}
+
+<style>
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  .hover-bg-light:hover {
+    background-color: #f8f9fa;
+  }
+  .selected-tag .btn-close {
+    font-size: 0.5rem;
+    margin-left: 0.5rem;
+  }
+</style>
 {% endblock %}

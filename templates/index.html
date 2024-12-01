@@ -28,9 +28,8 @@
           <thead>
             <tr>
               <th>Title</th>
-              <th>Subject</th>
-              <th>Topic</th>
               <th>Date</th>
+              <th>Tags</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -38,9 +37,12 @@
             {% for note in notes %}
             <tr>
               <td>{{ note.title }}</td>
-              <td>{{ note.subject }}</td>
-              <td>{{ note.topic }}</td>
               <td>{{ note.date }}</td>
+              <td>
+                {% if note.tags %} {% for tag in note.tags %}
+                <span class="badge bg-secondary me-1">{{ tag }}</span>
+                {% endfor %} {% endif %}
+              </td>
               <td>
                 <a
                   href="{{ url_for('display_note', note_id=note.id) }}"

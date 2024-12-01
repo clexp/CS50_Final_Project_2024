@@ -5,11 +5,11 @@ block main %}
     <div class="card-body">
       <h2 class="card-title">{{ note.title }}</h2>
 
-      {% if tags %}
+      {% if note_tags %}
       <div class="mb-3">
         <h6 class="text-muted">Tags:</h6>
         <div class="d-flex flex-wrap gap-2">
-          {% for tag in tags %}
+          {% for tag in note_tags %}
           <span class="badge bg-secondary">{{ tag.name }}</span>
           {% endfor %}
         </div>
@@ -17,8 +17,6 @@ block main %}
       {% endif %}
 
       <div class="card-text">
-        <p><strong>Subject:</strong> {{ note.subject or 'Not specified' }}</p>
-        <p><strong>Topic:</strong> {{ note.topic or 'Not specified' }}</p>
         <p><strong>Content:</strong></p>
         <p>{{ note.content }}</p>
 

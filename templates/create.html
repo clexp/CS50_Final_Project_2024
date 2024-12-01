@@ -9,7 +9,6 @@
   </div>
 
   <form action="/record_new_note" method="post">
-    <!-- First row with three columns -->
     <div class="row mb-3">
       <div class="col">
         <input
@@ -19,26 +18,12 @@
           name="title"
           placeholder="Note Title"
           type="text"
-        />
-      </div>
-      <div class="col">
-        <input
-          class="form-control"
-          name="subject"
-          placeholder="Note Subject"
-          type="text"
-        />
-      </div>
-      <div class="col">
-        <input
-          class="form-control"
-          name="topic"
-          placeholder="Note Topic"
-          type="text"
+          value="{{ title if title }}"
+          required
         />
       </div>
     </div>
-    <!-- Second row with full-width content textarea -->
+
     <div class="mb-3">
       <textarea
         class="form-control"
@@ -46,38 +31,17 @@
         placeholder="Note Content"
         rows="10"
         style="width: 100%"
-      ></textarea>
-    </div>
-
-    <!-- Tags Selection Section -->
-    <div class="mb-3">
-      <h5>Tags</h5>
-      <div
-        class="border rounded p-3"
-        style="max-height: 200px; overflow-y: auto"
+        required
       >
-        {% if tags %} {% for tag in tags %}
-        <div class="form-check form-check-inline">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            name="tags"
-            value="{{ tag.id }}"
-            id="tag{{ tag.id }}"
-          />
-          <label class="form-check-label" for="tag{{ tag.id }}">
-            {{ tag.name }}
-          </label>
-        </div>
-        {% endfor %} {% else %}
-        <p class="text-muted">
-          No tags available. Use the Manage Tags button above to create some.
-        </p>
-        {% endif %}
-      </div>
+{{ content if content }}</textarea
+      >
     </div>
 
-    <!-- New multiple choice section -->
+    <!-- Include tag search component -->
+    {% with label="Add Tags (Required)" %} {% include
+    'components/tag_search.html' %} {% endwith %}
+
+    <!-- Multiple choice section -->
     <div class="mb-3">
       <h5>Multiple Choice Question (Optional)</h5>
       <div class="mb-3">
@@ -86,7 +50,9 @@
           name="question"
           placeholder="Question"
           rows="2"
-        ></textarea>
+        >
+{{ question if question }}</textarea
+        >
       </div>
 
       <div class="row mb-3">
@@ -97,6 +63,7 @@
             class="form-control"
             name="correct_answer"
             placeholder="Correct Answer"
+            value="{{ correct_answer if correct_answer }}"
           />
         </div>
       </div>
@@ -109,18 +76,21 @@
             class="form-control mb-2"
             name="wrong_answer1"
             placeholder="Wrong Answer 1"
+            value="{{ wrong_answers[0] if wrong_answers }}"
           />
           <input
             type="text"
             class="form-control mb-2"
             name="wrong_answer2"
             placeholder="Wrong Answer 2"
+            value="{{ wrong_answers[1] if wrong_answers }}"
           />
           <input
             type="text"
             class="form-control"
             name="wrong_answer3"
             placeholder="Wrong Answer 3"
+            value="{{ wrong_answers[2] if wrong_answers }}"
           />
         </div>
       </div>
@@ -129,4 +99,6 @@
     <button class="btn btn-primary" type="submit">Save New Mem Note</button>
   </form>
 </div>
-{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tag_search.js') }}"></script>
+{% endblock %} {% endblock %}

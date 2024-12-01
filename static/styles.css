@@ -29,6 +29,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-top: 60px;
 }
 
 main {
@@ -73,4 +74,37 @@ footer {
 .navbar-nav .nav-link.text-primary {
   font-weight: 500;
   padding-right: 1rem;
+}
+
+/* Add these styles for fixed navbar */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1030;
+}
+
+/* Add these to your existing styles.css */
+.tag-autocomplete {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  background-color: white;
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  width: calc(100% - 2rem);
+  display: none;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hover-bg-light:hover {
+  background-color: #f8f9fa;
+}
+
+.selected-tag .btn-close {
+  font-size: 0.5rem;
+  margin-left: 0.5rem;
 }

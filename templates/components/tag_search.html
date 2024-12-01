@@ -1,0 +1,30 @@
+<!-- Tag search section -->
+<div class="mb-4">
+  <label class="form-label">{{ label|default('Search Tags') }}</label>
+  <div class="input-group mb-3">
+    <input
+      type="text"
+      class="form-control"
+      id="tagSearch"
+      placeholder="Type to search tags..."
+    />
+  </div>
+
+  <!-- Tag autocomplete dropdown -->
+  <div id="tagAutocomplete" class="tag-autocomplete"></div>
+
+  <!-- Selected tags -->
+  <div id="selectedTags" class="mb-3">
+    {% if selected_tags %} {% for tag in selected_tags %}
+    <span class="badge bg-primary me-2 mb-2">
+      {{ tag }}
+      <button
+        type="button"
+        class="btn-close btn-close-white"
+        aria-label="Remove"
+      ></button>
+      <input type="hidden" name="tags" value="{{ tag }}" />
+    </span>
+    {% endfor %} {% endif %}
+  </div>
+</div>
