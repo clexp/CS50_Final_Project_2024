@@ -54,10 +54,6 @@ main %}
               <small>{{ note.date }}</small>
             </div>
             <p class="mb-1">{{ note.content[:200] }}...</p>
-            <small
-              >Subject: {{ note.subject or 'Not specified' }} | Topic: {{
-              note.topic or 'Not specified' }}</small
-            >
           </a>
           {% endfor %}
         </div>
