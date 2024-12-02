@@ -2,9 +2,19 @@
 
 #### Video Demo: <URL HERE>
 
-#### Description: This a personal tool I wrote to track notes online.
+#### Description:This a personal tool I wrote to track notes online.
 
-This is meant to replace the orginal idea, which was unfeasible in a reasonable time frame. For the submitted project, please skip to line 270. For the Original project, see lines 10-270 and see the folder marked original_project. Please note the Original Project was well over twice the size you see here, but due to a water accident there was a substantial data loss.
+The orginal idea was replaced, which was unfeasible in a reasonable time frame. For the submitted project, please skip to line 270. For the Original project, see lines 20-310 and see the folder marked original_project. Please note the Original Project was well over twice the size you see here, but due to a water accident there was a substantial data loss. This is a good thing though, as it forced me to learn better project management and build a tool I actually use.
+
+chris.m.lewis@gmail.com
+cm.lewis@pm.me
+edex username: chris_9875
+github username: clexp
+Derby, Derbyshire, United Kingdom
+youtube url: https://www.youtube.com/
+title: Online note tracking tool
+Description: This a personal tool I wrote to track memory notes online, with a flash card system and performance tracking.
+Collaborators: None
 
 =======================================================
 
