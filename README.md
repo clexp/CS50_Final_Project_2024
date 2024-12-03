@@ -1,6 +1,6 @@
 # Online note tracking tool
 
-#### Video Demo: <URL HERE>
+#### Video Demo: https://youtu.be/SsdDu5BoMSw
 
 #### Description:This a personal tool I wrote to track notes online, with a flash card system and performance tracking.
 
@@ -10,7 +10,7 @@ chris.m.lewis@gmail.com
 cm.lewis@pm.me
 edex username: chris_9875
 github username: clexp
-github url: https://github.com/clexp
+github url: https://github.com/clexp/CS50_Final_Project_2024
 Derby, Derbyshire, United Kingdom
 youtube url: https://youtu.be/SsdDu5BoMSw
 title: Online note tracking tool
@@ -410,19 +410,19 @@ I want to use git and github for this. I can't do this on the cs50 remote vm. Th
 18. Stylize it to look less 'Finance50'
     THIS COMPLETES THE MVP, SUBMIT AT THIS STAGE
     OR SUBMIT 30-11-24
-19. Export the project.
-20. Set up a GitHub repo.
-21. Make the project video.
-22. Submit the form.
+19. Export the project. Done
+20. Set up a GitHub repo. Done
+21. Make the project video. Done
+22. Submit the form. Done
 23. Submit the project.
 24. Collect the certificate
     AIM TO COMPLETE 'BETTER' FOR PERSONAL USE
 25. Collect test results. done.
 26. Graph the test results by topic/ mem note. Done as tables
 27. Add optional Url web link to each note
-28. Add Flags to the database.
-29. Make a flag editor as a subset of new and edit note.
-30. Modify the test set builder for memorization.
+28. Add Flags to the database. Done
+29. Make a flag editor as a subset of new and edit note. Done
+30. Modify the test set builder for memorization. Done
     ??. Error handling.
     (Poorly memorized, not recently seen, and untested)
     AIM TO COMPLETE 'BEST' FOR SHARED USE
@@ -437,34 +437,16 @@ I want to use git and github for this. I can't do this on the cs50 remote vm. Th
 39. Put it on a remotely accessible server.
 40. Share it with others.
 41. People can save out and load in mem notes sets.
+42. Tags are autocompleted from a list of existing tags. done
+43. Tags are updated on save. done
+44. Notes are searched by tag. done
+45. Tags are deleted when they are no longer used. done
+46. duplicate functions are removed. done
+47. unused functions are removed. done
+48. unused imports are removed. done
+49. helper functions are moved to helpers.py. done
+50. debuggin print statements are removed. done
+51. docstrings are added to all functions. done
+52. unifying work split over multiple functions. done
 
-### Web Design
-
-#### Define
-
-- who : this is for a learner of any age.
-- what : this is designed to be a simple note logger, with a flashcard function. As a stretch goal it can track poorly memorized notes.
-
-#### Plan
-
-- This is as above, with milestones and dates
-
-#### Build
-
-- Mostly done at time of typing
-
-#### Test
-
-- test it on all browsers
-- test it on desktop and mobile
-- test it on different screen sizes
-- test it on different devices
-
-#### Deploy
-
-- this really mean submit the project to the CS50 marker
-- it also means put it on a publicly accessible server
-- and make a video
-- and submit the video to youtube
-- start using it myself
-- open accessibility to Rowenna
+Your README.md file should be minimally multiple paragraphs in length, and should explain what your project is, what each of the files you wrote for the project contains and does, and if you debated certain design choices, explaining why you made them. Ensure you allocate sufficient time and energy to writing a README.md that documents your project thoroughly. Be proud of it! A README.md in the neighborhood of 750 words is likely to be sufficient for describing your project and all aspects of its functionality. If unable to reach that threshold, that probably means your project is insufficiently complex.

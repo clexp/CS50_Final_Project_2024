@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let allTags = [];
 
   // Fetch tags from server once at startup
-  fetch("/tags/search")
+  fetch("/api/tags/search")
     .then((response) => response.json())
     .then((tags) => {
       allTags = tags;

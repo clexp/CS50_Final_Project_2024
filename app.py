@@ -18,7 +18,19 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, get_note_tags, get_all_tags, update_note_tags, remove_unused_tags
+from helpers import (
+    login_required,
+    get_note_tags,
+    get_all_tags,
+    update_note_tags,
+    remove_unused_tags,
+    init_users_db,
+    init_user_db,
+    get_users_db,
+    import_test_set,
+    get_user_db,
+)
+from config import SECRET_KEY
 
 # Configure application
 app = Flask(__name__)
@@ -27,6 +39,31 @@ app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
+app.secret_key = SECRET_KEY
+
+
+@app.before_request
+def before_request():
+    """Connect to the user-specific database before each request."""
+    if "username" in session:
+        try:
+            # Connect to user's database
+            db_path = f"users/data/{session['username']}.db"
+            g.db = sqlite3.connect(db_path)
+            g.db.row_factory = sqlite3.Row
+            g.cursor = g.db.cursor()
+        except sqlite3.Error as e:
+            print(f"Database connection error: {str(e)}")
+            g.db = None
+            g.cursor = None
+
+
+@app.teardown_request
+def teardown_request(exception):
+    """Close the database connection after each request."""
+    if hasattr(g, "db") and g.db is not None:
+        g.db.close()
+
 
 # Ensure the users directory structure exists
 if not os.path.exists("users"):
@@ -35,36 +72,13 @@ if not os.path.exists("users/data"):
     os.makedirs("users/data")
 
 
-# Initialize the users database at startup
-def init_users_db():
-    """Initialize the main users database"""
-    db = sqlite3.connect("users/users.db")
-    db.row_factory = sqlite3.Row
-    cursor = db.cursor()
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            hash TEXT NOT NULL,
-            has_test_set BOOLEAN DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """
-    )
-
-    db.commit()
-    db.close()
-
-
 # Initialize users database at startup
 init_users_db()
 
 
 @app.after_request
 def after_request(response):
-    """Ensure responses aren't cached"""
+    """Ensure responses aren't cached by setting appropriate headers."""
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
@@ -74,10 +88,22 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
+    """Render the index page with recent notes and total note count."""
+    # Add debug prints
+    print("Session state:", session)
+    print("Database connection:", hasattr(g, "db") and g.db is not None)
+
     try:
+        # Verify database connection
+        if not hasattr(g, "db") or g.db is None:
+            print("No database connection")
+            return redirect(url_for("login"))
+
         # Get total count of notes
         g.cursor.execute("SELECT COUNT(*) as count FROM notes")
-        total_notes = g.cursor.fetchone()["count"]
+        count_result = g.cursor.fetchone()
+        total_notes = count_result["count"] if count_result else 0
+        print(f"Total notes: {total_notes}")
 
         # Get recent notes with their tags
         g.cursor.execute(
@@ -92,6 +118,7 @@ def index():
         """
         )
         notes = [dict(row) for row in g.cursor.fetchall()]
+        print(f"Retrieved notes: {len(notes)}")
 
         # Convert tags string to list for each note
         for note in notes:
@@ -101,16 +128,17 @@ def index():
             "index.html",
             notes=notes,
             total_notes=total_notes,
-            show_import=total_notes == 0,
+            show_import=(total_notes == 0),
         )
-    except (AttributeError, sqlite3.OperationalError):
+    except (AttributeError, sqlite3.OperationalError) as e:
+        print(f"Error in index: {str(e)}")
         return redirect(url_for("login"))
 
 
 @app.route("/record_new_note", methods=["GET", "POST"])
 @login_required
 def create_new_note():
-    """Create a new note"""
+    """Create a new note with optional question and tags."""
     if request.method == "GET":
         # Get all available tags for the autocomplete
         g.cursor.execute("SELECT name FROM tags ORDER BY name")
@@ -176,14 +204,14 @@ def create_new_note():
                 VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)
             """,
                 (
-                    title, 
+                    title,
                     content,
                     question if question else None,
                     correct_answer if correct_answer else None,
                     wrong_answers[0] if question else None,
                     wrong_answers[1] if question else None,
-                    wrong_answers[2] if question else None
-                )
+                    wrong_answers[2] if question else None,
+                ),
             )
             note_id = g.cursor.lastrowid
 
@@ -222,6 +250,7 @@ def create_new_note():
 @app.route("/search", methods=["GET", "POST"])
 @login_required
 def search():
+    """Search for notes based on text query and selected tags."""
     # Get user's test set status from session
     has_test_set = session.get("has_test_set", False)
 
@@ -310,7 +339,7 @@ def search():
 @app.route("/display_note/<int:note_id>")
 @login_required
 def display_note(note_id):
-    """Display a single note."""
+    """Display a single note with its details and tags."""
     g.cursor.execute(
         """
         SELECT n.*, GROUP_CONCAT(t.name) as tags
@@ -347,6 +376,7 @@ def display_note(note_id):
 @app.route("/edit_note/<int:note_id>", methods=["GET", "POST"])
 @login_required
 def edit_note(note_id):
+    """Edit an existing note's content and tags."""
     if request.method == "GET":
         g.cursor.execute("SELECT * FROM notes WHERE id = ?", (note_id,))
         note = g.cursor.fetchone()
@@ -359,7 +389,7 @@ def edit_note(note_id):
             "edit_note.html",
             note=note,
             all_tags=get_all_tags(),
-            note_tags=get_note_tags(note_id)
+            note_tags=get_note_tags(note_id),
         )
 
     # Handle POST request
@@ -373,21 +403,25 @@ def edit_note(note_id):
 
     try:
         # Update note content
-        g.cursor.execute("""
+        g.cursor.execute(
+            """
             UPDATE notes 
             SET title = ?, content = ?, question = ?,
                 correct_answer = ?, wrong_answer1 = ?,
                 wrong_answer2 = ?, wrong_answer3 = ?
             WHERE id = ?
-        """, (
-            title, content,
-            request.form.get("question", "").strip(),
-            request.form.get("correct_answer", "").strip(),
-            request.form.get("wrong_answer1", "").strip(),
-            request.form.get("wrong_answer2", "").strip(),
-            request.form.get("wrong_answer3", "").strip(),
-            note_id
-        ))
+        """,
+            (
+                title,
+                content,
+                request.form.get("question", "").strip(),
+                request.form.get("correct_answer", "").strip(),
+                request.form.get("wrong_answer1", "").strip(),
+                request.form.get("wrong_answer2", "").strip(),
+                request.form.get("wrong_answer3", "").strip(),
+                note_id,
+            ),
+        )
 
         # Update tags using helper function
         if update_note_tags(note_id, selected_tags):
@@ -395,7 +429,7 @@ def edit_note(note_id):
             flash("Note updated successfully!")
         else:
             flash("Error updating tags!")
-            
+
         return redirect(url_for("display_note", note_id=note_id))
 
     except sqlite3.Error as e:
@@ -405,12 +439,9 @@ def edit_note(note_id):
 
 
 @app.route("/delete_note/<int:note_id>", methods=["GET", "POST"])
-# @login_required
 def delete_note(note_id):
-    """Allow deletion of selected note"""
-    # user_id = int(session["user_id"])
+    """Allow deletion of a selected note."""
     if request.method == "POST":
-        print("went to delete in POST")
         g.cursor.execute("DELETE FROM notes WHERE id = ?", (note_id,))
         g.db.commit()
         return redirect(url_for("search"))
@@ -419,18 +450,13 @@ def delete_note(note_id):
     return render_template("delete_note.html", this_note=mem_note)
 
 
-# removed old code. 
-
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Log user in"""
-    print(f"Starting login route, session: {session}")  # Debug print
-    
+    """Log user in by verifying username and password."""
     # Only clear specific keys, not the entire session
-    session.pop('user_id', None)
-    session.pop('username', None)
-    session.pop('has_test_set', None)
+    session.pop("user_id", None)
+    session.pop("username", None)
+    session.pop("has_test_set", None)
 
     if request.method == "POST":
         # Ensure username was submitted
@@ -451,36 +477,30 @@ def login():
         try:
             username = request.form.get("username")
             password = request.form.get("password")
-            print(f"Login attempt for user: {username}")  # Debug print
 
             # Query database for username
-            users_cursor.execute(
-                "SELECT * FROM users WHERE username = ?",
-                (username,)
-            )
+            users_cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
             user = users_cursor.fetchone()
 
             # Ensure username exists and password is correct
             if user is None:
                 flash("Invalid username")
                 return render_template("login.html")
-            
+
             if not check_password_hash(user["hash"], password):
                 flash("Invalid password")
                 return render_template("login.html")
 
             # Remember which user has logged in
             session.permanent = True  # Make session permanent
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            session['has_test_set'] = bool(user['has_test_set'])
-            print(f"Login successful. Session: {session}")  # Debug print
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            session["has_test_set"] = bool(user["has_test_set"])
 
             flash("Logged in successfully!")
-            return render_template("index.html")  # Return index template directly
+            return redirect(url_for("index"))
 
         except sqlite3.Error as e:
-            print(f"Database error: {str(e)}")
             flash(f"Database error: {str(e)}")
             return render_template("index.html")
 
@@ -492,7 +512,7 @@ def login():
 
 @app.route("/logout")
 def logout():
-    """Log user out"""
+    """Log user out by clearing the session."""
 
     # Forget any user_id
     session.clear()
@@ -503,16 +523,12 @@ def logout():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Register user"""
-    print(f"Starting register route, session: {session}")  # Debug print
-    
+    """Register a new user with a unique username and password."""
     if request.method == "POST":
         # Get form information
         username = request.form.get("username")
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
-        
-        print(f"Registration attempt for user: {username}")  # Debug print
 
         # Ensure username was submitted
         if not username:
@@ -538,7 +554,7 @@ def register():
             with sqlite3.connect("users/users.db") as users_db:
                 users_db.row_factory = sqlite3.Row
                 users_cursor = users_db.cursor()
-                
+
                 # Check if username already exists
                 users_cursor.execute(
                     "SELECT * FROM users WHERE username = ?", (username,)
@@ -550,9 +566,15 @@ def register():
                 # Add new user to database
                 users_cursor.execute(
                     "INSERT INTO users (username, hash, has_test_set) VALUES (?, ?, ?)",
-                    (username, generate_password_hash(password), False)
+                    (
+                        username,
+                        generate_password_hash(
+                            password, method="pbkdf2:sha256", salt_length=8
+                        ),
+                        False,
+                    ),
                 )
-                
+
                 # Get the new user's ID
                 users_cursor.execute(
                     "SELECT * FROM users WHERE username = ?", (username,)
@@ -561,59 +583,25 @@ def register():
 
             # Set session variables
             session.permanent = True  # Make session permanent
-            session['user_id'] = user['id']
-            session['username'] = username
-            session['has_test_set'] = False
+            session["user_id"] = user["id"]
+            session["username"] = username
+            session["has_test_set"] = False
 
             init_user_db(username)
-            
-            print(f"Registration successful. Session: {session}")
-            
+
             flash("Registered successfully!")
-            return redirect(url_for('index'))  # Be explicit about the redirect
+            return redirect(url_for("index"))  # Be explicit about the redirect
 
         except sqlite3.Error as e:
-            print(f"Database error: {str(e)}")
             flash(f"Database error: {str(e)}")
             return render_template("login.html")
 
     return render_template("register.html")
 
 
-@app.route("/change_password", methods=["GET", "POST"])
-@login_required
-def change_password():
-    user_id = int(session["user_id"])
-    """Change password."""
-    if request.method == "GET":
-        return render_template("change_password.html")
-
-    if request.method == "POST":
-        old_password = request.form.get("old_password")
-        hash_record = g.db.execute("SELECT hash FROM users WHERE id = ?; ", user_id)[0][
-            "hash"
-        ]
-        if not check_password_hash(hash_record, old_password):
-            return apology("incorrect password")
-        new_password_1 = request.form.get("password1")
-        new_password_2 = request.form.get("password2")
-        if new_password_1 != new_password_2:
-            return apology("New passwords not matching")
-        new_hash = generate_password_hash(new_password_1)
-        if 1 == g.db.execute(
-            "UPDATE users SET hash = ? WHERE id = ?;", new_hash, user_id
-        ):
-            session.clear()
-            # this is non ideal, as if it updates multiple rows, this is not flagged
-            print("cleared session, went to index, did not like usd?")
-            return redirect("/")
-    return apology("Password update error")
-
-
 @app.route("/flashcards")
-# @login_required
 def flashcards():
-    """Show flashcard practice page"""
+    """Show a flashcard practice page with random questions."""
     g.cursor.execute(
         """
         SELECT id, title, subject, topic, question, correct_answer, 
@@ -642,82 +630,10 @@ def flashcards():
     return render_template("flashcards.html", card=None)
 
 
-@app.route("/record_new_note", methods=["GET", "POST"])
-@login_required
-def record_new_note():
-    """Record a new note."""
-    if request.method == "POST":
-        # Get form data
-        title = request.form.get("title")
-        content = request.form.get("content")
-        subject = request.form.get("subject")
-        topic = request.form.get("topic")
-        question = request.form.get("question")
-        correct_answer = request.form.get("correct_answer")
-        wrong_answer1 = request.form.get("wrong_answer1")
-        wrong_answer2 = request.form.get("wrong_answer2")
-        wrong_answer3 = request.form.get("wrong_answer3")
-        # Get selected tags as list
-        selected_tags = request.form.getlist("tags")
-
-        if not title:
-            return apology("must provide title")
-        if not content:
-            return apology("must provide content")
-
-        # Insert note
-        g.cursor.execute(
-            """
-            INSERT INTO notes (
-                title, content, subject, topic,
-                question, correct_answer,
-                wrong_answer1, wrong_answer2, wrong_answer3
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            (
-                title,
-                content,
-                subject,
-                topic,
-                question,
-                correct_answer,
-                wrong_answer1,
-                wrong_answer2,
-                wrong_answer3,
-            ),
-        )
-
-        # Get the id of the newly inserted note
-        note_id = g.cursor.lastrowid
-
-        # Insert tag relationships
-        if selected_tags:
-            for tag_id in selected_tags:
-                g.cursor.execute(
-                    """
-                    INSERT INTO note_tags (note_id, tag_id)
-                    VALUES (?, ?)
-                """,
-                    (note_id, tag_id),
-                )
-
-        g.db.commit()
-        flash("Note saved successfully!")
-        return redirect("/")
-
-    # GET request - show the form
-    # Get all available tags
-    g.cursor.execute("SELECT * FROM tags ORDER BY name")
-    tags = g.cursor.fetchall()
-    # print(f"Debug - Found tags: {tags}")  # Debug output
-
-    return render_template("create.html", tags=tags)
-
-
 @app.route("/start_test", methods=["GET", "POST"])
 @login_required
 def start_test():
-    """Start a new test."""
+    """Start a new test with questions filtered by type."""
     if request.method == "GET":
         return render_template("test_setup.html")
 
@@ -772,8 +688,8 @@ def start_test():
 
 
 @app.route("/show_test_question")
-# @login_required
 def show_test_question():
+    """Display the current test question and its answers."""
     if "test_questions" not in session:
         return redirect(url_for("test_setup"))
 
@@ -804,8 +720,8 @@ def show_test_question():
 
 
 @app.route("/check_answer/<int:question_id>", methods=["POST"])
-# @login_required
 def check_answer(question_id):
+    """Check the answer for a specific question and provide feedback."""
     selected_answer = request.form.get("answer")
 
     # Get correct answer from database
@@ -835,6 +751,7 @@ def check_answer(question_id):
 @app.route("/check_test_answer", methods=["POST"])
 @login_required
 def check_test_answer():
+    """Check the answer for the current test question and update stats."""
     if "test_questions" not in session:
         return redirect(url_for("test_setup"))
 
@@ -873,6 +790,7 @@ def check_test_answer():
 @app.route("/stats")
 @login_required
 def show_stats():
+    """Show statistics of note challenges and success rates."""
     page = int(request.args.get("page", 1))
     per_page = 10
 
@@ -921,6 +839,7 @@ def show_stats():
 @app.route("/select_test_questions", methods=["POST"])
 @login_required
 def select_test_questions():
+    """Select questions for a test based on success rate."""
     n = int(request.form.get("question_count", 10))
 
     g.cursor.execute(
@@ -954,305 +873,90 @@ def select_test_questions():
         return redirect(url_for("index"))
 
 
-def get_db():
-    db = sqlite3.connect("notes.db")
-    db.row_factory = sqlite3.Row
-    return db
-
-
-@app.before_request
-def before_request():
-    """Connect to user-specific database before each request"""
-    if 'username' in session:
-        try:
-            # Connect to user's database
-            db_path = f"users/data/{session['username']}.db"
-            g.db = sqlite3.connect(db_path)
-            g.db.row_factory = sqlite3.Row
-            g.cursor = g.db.cursor()
-        except sqlite3.Error as e:
-            print(f"Database connection error: {str(e)}")
-            g.db = None
-            g.cursor = None
-
-
-
-@app.teardown_request
-def teardown_request(exception):
-    """Close database connection after each request"""
-    if hasattr(g, "db") and g.db is not None:
-        g.db.close()
-
-
-app.secret_key = "your_secret_key_here"  # Change this to a secure value
-
-
-def get_user_db(username):
-    """Get connection to user-specific database"""
-    db_path = f"users/data/{username}.db"
-    db = sqlite3.connect(db_path)
-    db.row_factory = sqlite3.Row
-    return db
-
-
-def init_user_db(username):
-    """Initialize a new user's database with required tables"""
-    db = get_user_db(username)
-    cursor = db.cursor()
-
-    # Create notes table without user_id since each DB is user-specific
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS notes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            content TEXT NOT NULL,
-            date DATETIME DEFAULT CURRENT_TIMESTAMP,
-            question TEXT,
-            correct_answer TEXT,
-            wrong_answer1 TEXT,
-            wrong_answer2 TEXT,
-            wrong_answer3 TEXT,
-            times_challenged INTEGER DEFAULT 0,
-            times_correct INTEGER DEFAULT 0,
-            last_tested DATETIME
-        )
-    """
-    )
-
-    # Create tags table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS tags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """
-    )
-
-    # Create note_tags junction table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS note_tags (
-            note_id INTEGER NOT NULL,
-            tag_id INTEGER NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (note_id, tag_id),
-            FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
-            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
-        )
-    """
-    )
-
-    db.commit()
-    db.close()
-
-
-# Main users database
-def get_users_db():
-    """Get connection to main users database"""
-    db = sqlite3.connect("users/users.db")
-    db.row_factory = sqlite3.Row
-    return db
-
-
-def import_test_set(user_id):
-    """Import test set notes and related data for a user"""
-    try:
-        # Connect to source database
-        source_db = sqlite3.connect("mem_notes.db")
-        source_db.row_factory = sqlite3.Row
-        source_cursor = source_db.cursor()
-
-        # First import all tags
-        source_cursor.execute("SELECT name FROM tags")
-        source_tags = source_cursor.fetchall()
-        for tag in source_tags:
-            g.cursor.execute("""
-                INSERT OR IGNORE INTO tags (name, created_at) 
-                VALUES (?, CURRENT_TIMESTAMP)
-            """, (tag['name'],))
-
-        # Add TEST SET tag
-        g.cursor.execute("""
-            INSERT OR IGNORE INTO tags (name, created_at) 
-            VALUES ('TEST SET', CURRENT_TIMESTAMP)
-        """)
-
-        # Get all notes from source
-        source_cursor.execute("""
-            SELECT id, title, content, question, correct_answer,
-                   wrong_answer1, wrong_answer2, wrong_answer3
-            FROM notes
-        """)
-        notes = source_cursor.fetchall()
-
-        for note in notes:
-            # For each note, get its tags
-            source_cursor.execute("""
-                SELECT t.name 
-                FROM tags t
-                JOIN note_tags nt ON t.id = nt.tag_id
-                WHERE nt.note_id = ?
-            """, (note['id'],))
-            note_tags = [row['name'] for row in source_cursor.fetchall()]
-            
-            # Add TEST SET tag to the list
-            note_tags.append('TEST SET')
-
-            try:
-                # Use create_new_note logic
-                g.cursor.execute("""
-                    INSERT INTO notes (
-                        title, content, date, question, correct_answer,
-                        wrong_answer1, wrong_answer2, wrong_answer3
-                    ) VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)
-                """, (
-                    note['title'], 
-                    note['content'],
-                    note['question'], 
-                    note['correct_answer'],
-                    note['wrong_answer1'], 
-                    note['wrong_answer2'], 
-                    note['wrong_answer3']
-                ))
-                new_note_id = g.cursor.lastrowid
-
-                # Link tags to note
-                for tag_name in note_tags:
-                    g.cursor.execute("SELECT id FROM tags WHERE name = ?", (tag_name,))
-                    tag_id = g.cursor.fetchone()["id"]
-                    g.cursor.execute("""
-                        INSERT INTO note_tags (note_id, tag_id, created_at) 
-                        VALUES (?, ?, CURRENT_TIMESTAMP)
-                    """, (new_note_id, tag_id))
-
-            except sqlite3.Error as e:
-                print(f"Error importing note {note['title']}: {str(e)}")
-                continue
-
-        g.db.commit()
-
-        # Update user's has_test_set flag
-        users_db = sqlite3.connect("users/users.db")
-        users_cursor = users_db.cursor()
-        try:
-            users_cursor.execute(
-                "UPDATE users SET has_test_set = 1 WHERE id = ?",
-                (user_id,)
-            )
-            users_db.commit()
-            session["has_test_set"] = True
-        finally:
-            users_db.close()
-
-        source_db.close()
-        return True
-
-    except sqlite3.Error as e:
-        g.db.rollback()
-        if 'source_db' in locals():
-            source_db.close()
-        print(f"Error importing test set: {str(e)}")
-        return False
-
-
 @app.route("/import_test_set")
 @login_required
 def handle_import_test_set():
-    """Handle the import test set request"""
-    import_test_set(session["username"])
-
-    # Update users.db
-    users_db = sqlite3.connect("users/users.db")
-    users_cursor = users_db.cursor()
-
-    try:
-        users_cursor.execute(
-            """
-            UPDATE users 
-            SET has_test_set = 1 
-            WHERE id = ?
-        """,
-            (session["user_id"],),
-        )
-        users_db.commit()
-        session["has_test_set"] = True  # Update session
-    finally:
-        users_db.close()
-
-    flash("Test set imported successfully!")
+    """Handle the import test set request for the current user."""
+    if import_test_set(session["user_id"]):  # Pass user_id instead of username
+        flash("Test set imported successfully!")
+    else:
+        flash("Error importing test set", "error")
     return redirect("/")
 
 
 @app.route("/remove_test_set")
 @login_required
 def remove_test_set():
-    """Remove all test set notes"""
+    """Remove all test set notes from the user's database."""
     try:
         # Start transaction
         g.cursor.execute("BEGIN TRANSACTION")
-        
+
         # Get the test set tag ID
         g.cursor.execute("SELECT id FROM tags WHERE name = 'TEST SET'")
         test_set_tag = g.cursor.fetchone()
-        
+
         if test_set_tag:
-            test_set_tag_id = test_set_tag['id']
-            print(f"Found TEST SET tag ID: {test_set_tag_id}")
-            
+            test_set_tag_id = test_set_tag["id"]
+
             # Get all note IDs that have TEST SET tag
-            g.cursor.execute("""
+            g.cursor.execute(
+                """
                 SELECT DISTINCT note_id 
                 FROM note_tags 
                 WHERE tag_id = ?
-            """, (test_set_tag_id,))
-            test_set_note_ids = [row['note_id'] for row in g.cursor.fetchall()]
-            print(f"Found {len(test_set_note_ids)} notes to remove")
-            
+            """,
+                (test_set_tag_id,),
+            )
+            test_set_note_ids = [row["note_id"] for row in g.cursor.fetchall()]
+
             if test_set_note_ids:
                 # Delete all note_tags entries for these notes at once
-                placeholders = ','.join('?' * len(test_set_note_ids))
-                g.cursor.execute(f"""
+                placeholders = ",".join("?" * len(test_set_note_ids))
+                g.cursor.execute(
+                    f"""
                     DELETE FROM note_tags 
                     WHERE note_id IN ({placeholders})
-                """, test_set_note_ids)
-                print(f"Removed note_tags entries")
-                
+                """,
+                    test_set_note_ids,
+                )
+
                 # Delete all these notes at once
-                g.cursor.execute(f"""
+                g.cursor.execute(
+                    f"""
                     DELETE FROM notes 
                     WHERE id IN ({placeholders})
-                """, test_set_note_ids)
-                print(f"Removed notes")
-            
+                """,
+                    test_set_note_ids,
+                )
+
             # Delete the TEST SET tag
-            g.cursor.execute("""
+            g.cursor.execute(
+                """
                 DELETE FROM tags 
                 WHERE id = ?
-            """, (test_set_tag_id,))
-            print("Removed TEST SET tag")
+            """,
+                (test_set_tag_id,),
+            )
 
             # Clean up unused tags
             deleted_tags = remove_unused_tags()
-            print(f"Removed {deleted_tags} unused tags")
 
-        # Commit all changes
-        g.db.commit()
+            # Commit all changes
+            g.db.commit()
 
-        # Update users database
-        users_db = sqlite3.connect("users/users.db")
-        users_cursor = users_db.cursor()
-        try:
-            users_cursor.execute(
-                "UPDATE users SET has_test_set = 0 WHERE id = ?",
-                (session["user_id"],)
-            )
-            users_db.commit()
-            session["has_test_set"] = False
-        finally:
-            users_db.close()
+            # Update users database
+            users_db = sqlite3.connect("users/users.db")
+            users_cursor = users_db.cursor()
+            try:
+                users_cursor.execute(
+                    "UPDATE users SET has_test_set = 0 WHERE id = ?",
+                    (session["user_id"],),
+                )
+                users_db.commit()
+                session["has_test_set"] = False
+            finally:
+                users_db.close()
 
         flash("Test set removed successfully!")
         return redirect("/")
@@ -1260,13 +964,13 @@ def remove_test_set():
     except sqlite3.Error as e:
         g.db.rollback()
         flash(f"Error removing test set: {str(e)}")
-        print(f"Error: {str(e)}")
         return redirect("/")
 
 
 @app.route("/manage_tags", methods=["GET", "POST"])
 @login_required
 def manage_tags():
+    """Manage tags by adding, deleting, or editing them."""
     if request.method == "POST":
         action = request.form.get("action")
 
@@ -1285,17 +989,17 @@ def manage_tags():
             try:
                 # Start a transaction
                 g.cursor.execute("BEGIN TRANSACTION")
-                
+
                 # First delete from note_tags table
                 g.cursor.execute("DELETE FROM note_tags WHERE tag_id = ?", (tag_id,))
-                
+
                 # Then delete from tags table
                 g.cursor.execute("DELETE FROM tags WHERE id = ?", (tag_id,))
-                
+
                 # Commit the transaction
                 g.db.commit()
                 flash("Tag and all its references deleted successfully!")
-                
+
             except sqlite3.Error as e:
                 # If anything goes wrong, roll back the transaction
                 g.db.rollback()
@@ -1355,68 +1059,10 @@ def manage_tags():
     )
 
 
-@app.route("/tags", methods=["GET"])
-def get_tags():
-    conn = sqlite3.connect("your_database.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT tag FROM tags")
-    tags = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(tags)
-
-
-@app.route("/tags/search")
+@app.route("/api/tags/search")
 @login_required
 def search_tags():
-    """Return all tags for autocomplete"""
+    """Return all tags for autocomplete functionality."""
     g.cursor.execute("SELECT name FROM tags ORDER BY name")
     tags = [row["name"] for row in g.cursor.fetchall()]
     return jsonify(tags)
-
-
-def clean_tags():
-    """Clean up orphaned tags and note_tag relationships"""
-    try:
-        # Start transaction
-        g.cursor.execute("BEGIN TRANSACTION")
-
-        # 1. Clean up note_tags entries where note doesn't exist
-        g.cursor.execute("""
-            DELETE FROM note_tags 
-            WHERE note_id NOT IN (SELECT id FROM notes)
-        """)
-        
-        # 2. Get all existing tags
-        g.cursor.execute("SELECT id FROM tags")
-        all_tags = {row['id'] for row in g.cursor.fetchall()}
-
-        # 3. Find all tags that are actually used in notes
-        g.cursor.execute("""
-            SELECT DISTINCT tag_id 
-            FROM note_tags
-        """)
-        used_tag_ids = {row['tag_id'] for row in g.cursor.fetchall()}
-
-        # 4. Find and delete unused tags
-        unused_tag_ids = all_tags - used_tag_ids
-        
-        if unused_tag_ids:
-            placeholders = ','.join('?' * len(unused_tag_ids))
-            g.cursor.execute(f"""
-                DELETE FROM tags 
-                WHERE id IN ({placeholders})
-            """, list(unused_tag_ids))
-
-        # Commit changes
-        g.db.commit()
-        
-        # Return statistics
-        return {
-            'orphaned_tags_removed': len(unused_tag_ids),
-        }
-
-    except sqlite3.Error as e:
-        g.db.rollback()
-        print(f"Error cleaning tags: {str(e)}")
-        return None
-
