@@ -38,10 +38,10 @@ It is clear that artificial intelligence tools are excellent and benefit us a gr
 
 #######################################################
 #######################################################
-####### ########
-####### ORIGINAL PROJECT ########
-####### STARTS HERE ########
-####### ########
+
+ORIGINAL PROJECT
+STARTS HERE
+
 #######################################################
 #######################################################
 
@@ -328,10 +328,10 @@ What I do want is an online note logger. This would outlive my time on CS 50. An
 
 #######################################################
 #######################################################
-####### ########
-####### FINAL PROJECT ########
-####### STARTS HERE ########
-####### ########
+
+FINAL PROJECT
+STARTS HERE
+
 #######################################################
 #######################################################
 
@@ -449,6 +449,44 @@ I want to use git and github for this. I can't do this on the cs50 remote vm. Th
 51. docstrings are added to all functions. done
 52. unifying work split over multiple functions. done
 
+### Design Choices
+
+#### Finance50 as a framework
+
+I used to finance 50 project as a framework. I knew the majority of the material would be changed, but I knew had a system that worked. I could change one little bit at a time and prove each little step worked. They saved a lot of time from building from scratch. The majority of the app is fully changed. There are some code snippets that are similar.
+
+#### Flask
+
+I did think for a little while about using Django. I don't know Django very well but it seems like it's a complete content management system. I've already learnt some flash and felt I'm trying to build a webpage rather than learn how to use a content management system. I stayed with flask.
+
+Flask also taught me a lot about sessions, database connections and keeping things secure. While a lot of these while 'best practice' comments from AI bots, they all referred to best practice within flask. This was a good exercise in learning about security and data hygeine. It also made me realize that people have met and solved the same problems I was solving, leaving their tools for me to use.
+
+#### SQLite
+
+I have used at the types of EQR before the Eskimo light is entirely for a project of this size. I had to remove some of the CS5 SQL code and do some practice exercises on using proper rescuer light to type SQL. I learnt a huge amount about how you can layout and frame SQL Queries and even about SQL scripting. SQL is a well established well developed framework for handling databases. I'm not surprised that there are careers in being a database admin?
+
+#### Jinja
+
+Jinja or more specifically Jinja2 was always going to be the right tool for this. It's pretty simple and straightforward and makes a lot of sense.
+
+#### One database per user
+
+I have a database for each user. This is a design choice. It makes the project more complex but I think it is a good choice. It allows me to have a test set for each user. More specifically if I had a higher number of users each of which have a higher number of notes and tags this division allows the memory demands to be much lower also provides me an opportunity in the future to create database export and import functions.
+
+#### Split tags and notes tables, with an appearances table
+
+I have a tags table and a notes table. I have an appearances table. The appearances table is used to link a note to a tag. The appearances table allows for multiple tags to be linked to a note. The appearances table allows for multiple notes to be linked to a tag. The appearances table allows for the quick lookup of all the notes linked to a tag.
+
+I learnt a lot about database design and normalisation, particularly with reference to first normal form, second normal form, and third normal form. Splitting the tags and notes tables and having an appearances table is a design that allows for high performance.
+
+There is a cost to this design. It is more complex to set up. It is more complex to use. Removing a tag from a note requires a delete from the appearances table. Adding a tag to a note requires an insert into the appearances table. This needs to be implemented cleanly.
+
+#### Flash Cards
+
+I used the SQLoxide library to parse the SQL and extract the tokens. I then used the python 'random' library to shuffle the cards and select them. A memorisation support system is part of the key value proposition of this project. At the moment it is very simple. It selects a random card and shows the question. If you get it right the same card is shown again. If you get it wrong another card is shown.
+
+In the future I would like to add a spaced repetition system. And possibly a calendar based repetition system, repeating notes on a particular date. I would like to generative AI to make the flash cards feel like first viewing the question and then seeing the answer.
+
 ### files
 
 #### **pycache**
@@ -458,6 +496,8 @@ These are the python bytecode files. They help the python interpreter run faster
 #### static
 
 This folder contains the static files for the web app. These are the files that are served to the client browser. There are no images in the static files directory. There is one JavaScript which is used to implement a lifetime search in the tech editor sessions. There is a little bit of CSS.
+
+This whole page could've been much more styled with CSS, and actually this will be one of my goals going forwards.
 
 #### templates
 
@@ -477,7 +517,7 @@ This is the template for the edit note page. It provides a form for editing a no
 
 ##### index.html
 
-This is the template for the main page. It provides a search function and a button for adding a new note.
+This is the template for the main page. It provides a An overview of the current notes if there are no notes the option to add the test set is available.
 
 ##### login.html
 
@@ -513,11 +553,11 @@ This is the template for the tag search page. It provides a form for displaying 
 
 ##### stats.html
 
-This is the template for the stats page. It provides a form for displaying stats. The stats are used by the JavaScript.
+This is the template for the stats page. It provides a form for displaying stats.
 
 ##### tags.html
 
-This is the template for the tags page. It provides a form for displaying tags.
+This is the template for the tags page. It provides a form for displaying and editing tags, and adding new tags.
 
 ##### answer_feedback.html
 
@@ -543,4 +583,22 @@ This file contains the secret key for the session.
 
 This file contains a function that converts the subjects in the notes to tags.
 
-Your README.md file should be minimally multiple paragraphs in length, and should explain what your project is, what each of the files you wrote for the project contains and does, and if you debated certain design choices, explaining why you made them. Ensure you allocate sufficient time and energy to writing a README.md that documents your project thoroughly. Be proud of it! A README.md in the neighborhood of 750 words is likely to be sufficient for describing your project and all aspects of its functionality. If unable to reach that threshold, that probably means your project is insufficiently complex.
+#### convert_subjects_to_tags.py
+
+This file has some SQL commands to move data from one column to another. It was necessary and moving through some stages of development but is no longer being used.
+
+#### helpers.py
+
+This file contains helper functions for the web app.
+
+#### mem_notes.db
+
+This database contains the test set of cards and questions and tags.
+
+#### notes-insert-script.sql
+
+This file contains SQL script to populate the test set database with test questions.
+
+#### README.md
+
+This file contains the README.md file for the web app.
