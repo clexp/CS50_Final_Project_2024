@@ -449,4 +449,98 @@ I want to use git and github for this. I can't do this on the cs50 remote vm. Th
 51. docstrings are added to all functions. done
 52. unifying work split over multiple functions. done
 
+### files
+
+#### **pycache**
+
+These are the python bytecode files. They help the python interpreter run faster by not having to recompile the code each time.
+
+#### static
+
+This folder contains the static files for the web app. These are the files that are served to the client browser. There are no images in the static files directory. There is one JavaScript which is used to implement a lifetime search in the tech editor sessions. There is a little bit of CSS.
+
+#### templates
+
+This folder contains the html templates for the web app.
+
+##### layout.html
+
+This is the base template for all the pages. It defines the menu structure and provides for page content to be inserted.
+
+##### delete_note.html
+
+This is the template for the delete note page. It provides a confirmation dialog for deleting a note.
+
+##### edit_note.html
+
+This is the template for the edit note page. It provides a form for editing a note.
+
+##### index.html
+
+This is the template for the main page. It provides a search function and a button for adding a new note.
+
+##### login.html
+
+This is the template for the login page. It provides a form for entering a username and password.
+
+##### register.html
+
+This is the template for the register page. It provides a form for entering a username and password.
+
+##### search.html
+
+This is the template for the search page. It provides a form for entering a search query and displaying the results.
+
+##### display_note.html
+
+This is the template for the display note page. It provides a form for displaying a note.
+
+##### test_setup.html
+
+This is the template for the test setup page. It provides a form for entering a test setup.
+
+##### test_complete.html
+
+This is the template for the test complete page. It provides a form for displaying a test complete message.
+
+##### test_question.html
+
+This is the template for the test question page. It provides a form for displaying a test question.
+
+##### tag_search.html
+
+This is the template for the tag search page. It provides a form for displaying a tag search. The tag search is used by the JavaScript.
+
+##### stats.html
+
+This is the template for the stats page. It provides a form for displaying stats. The stats are used by the JavaScript.
+
+##### tags.html
+
+This is the template for the tags page. It provides a form for displaying tags.
+
+##### answer_feedback.html
+
+This is the template for the answer feedback page. It provides a form for displaying answer feedback.
+
+##### create_note.html
+
+This is the template for the create note page. It provides a form for creating a note.
+
+#### users
+
+This directory contains a database of known users and a sub directory of databases for each user containing their notes. The users database has hashed passwords and carries a flag representing whether the test question set has been imported. The user databases are structured identically but with a different content, they all have three tables. A notes table a table and a table of appearances of each note on each tag.
+
+#### app.py
+
+This is the main application file. It contains the Flask routes for the web app. I have tried to keep this mostly with functions that serve roots however a fair amount of processing code appears in some functions.
+
+#### config.py
+
+This file contains the secret key for the session.
+
+#### convert_subjects_to_tags.py
+
+This file contains a function that converts the subjects in the notes to tags.
+
 Your README.md file should be minimally multiple paragraphs in length, and should explain what your project is, what each of the files you wrote for the project contains and does, and if you debated certain design choices, explaining why you made them. Ensure you allocate sufficient time and energy to writing a README.md that documents your project thoroughly. Be proud of it! A README.md in the neighborhood of 750 words is likely to be sufficient for describing your project and all aspects of its functionality. If unable to reach that threshold, that probably means your project is insufficiently complex.
