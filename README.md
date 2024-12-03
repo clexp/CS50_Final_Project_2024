@@ -2,19 +2,37 @@
 
 #### Video Demo: <URL HERE>
 
-#### Description:This a personal tool I wrote to track notes online.
+#### Description:This a personal tool I wrote to track notes online, with a flash card system and performance tracking.
 
-The orginal idea was replaced, which was unfeasible in a reasonable time frame. For the submitted project, please skip to line 270. For the Original project, see lines 20-310 and see the folder marked original_project. Please note the Original Project was well over twice the size you see here, but due to a water accident there was a substantial data loss. This is a good thing though, as it forced me to learn better project management and build a tool I actually use.
+The orginal idea was replaced, which was unfeasible in a reasonable time frame. For the submitted project, please skip to line 290. For the Original project, see lines 40-330 and see the folder marked original_project. Please note the Original Project was well over twice the size you see here, but due to a water accident there was a substantial data loss. This is a good thing though, as it forced me to learn better project management and build a tool I actually use.
 
 chris.m.lewis@gmail.com
 cm.lewis@pm.me
 edex username: chris_9875
 github username: clexp
+github url: https://github.com/clexp
 Derby, Derbyshire, United Kingdom
-youtube url: https://www.youtube.com/
+youtube url: https://youtu.be/SsdDu5BoMSw
 title: Online note tracking tool
 Description: This a personal tool I wrote to track memory notes online, with a flash card system and performance tracking.
 Collaborators: None
+
+### Use of artificial intelligence tools.
+
+Use of artificial intelligence tools.
+It has obviously controversial to consider using artificial intelligence tools in a learning product. Nevertheless, this is going to be the workflow in the future and learning how to learn in a way that is not compromised by these tools whilst also learning how to use these tools is probably the right balance to strike. During the CS5 I use the built-in AI in the VS code online system. This carefully supplied me only with a few simple examples but did not write sections of code. This was useful for learning. In the final project I extended out to using open AI and also anthropic Claude models.
+
+Open AI and anthropic Claud models were much better for discussing conceptual detail. They were also pretty good for giving examples of use. While documentation is readily available, it is often written by developers for developers and is not very comprehensible for on boarding new learners. I found asking the chat AI machines to interpret documentation very helpful. This saved many hours of searching through documentation and blog posts. In short, I think the AI increased my productivity.
+
+Throughout all uses of AI, I found the chat models would correctly raise advanced topics. This was very instructional and gave me some reasonable direction however there were no situations in which the AI suggested something that I was not already aware would be appropriate. The role of the AI was to determine which method or technique would be more appropriate given what I was trying to accomplish. Some of the AI advice was inaccurate and there was valuable learning from attempting the AI suggestion and finding it not to be useful.
+
+Some of the AI advice was inaccurate and there was valuable learning from attempting the AI suggestion and finding it not to be useful.
+
+I would like to make a comment about AI written code. I have used the AI in the VS code system specifically the cursor model to write code. It is very easy to write large portions of code but then it is also very easy to include duplicate functions and have useful functionality removed. The artificial intelligence tools helped me overcome my human memory forgetfulness and difficulty with understanding documentation. It also has an excellent auto complete function which will look at the rest of my code and complete repeated lines. If used in properly I found that the artificial intelligence tool will duplicate functions remove useful functions and sometimes add inappropriate code.
+
+understanding documentation. It also has an excellent auto complete function which will look at the rest of my code and complete repeated lines. If used in properly I found that the artificial intelligence tool will duplicate functions remove useful functions and sometimes add inappropriate code.
+
+It is clear that artificial intelligence tools are excellent and benefit us a great deal in the future, however they need to be used carefully..
 
 =======================================================
 
